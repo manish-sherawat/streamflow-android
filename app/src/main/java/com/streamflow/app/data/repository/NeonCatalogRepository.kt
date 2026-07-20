@@ -11,8 +11,7 @@ import javax.inject.Singleton
 
 @Singleton
 class NeonCatalogRepository @Inject constructor(
-    private val apiService: StreamFlowApiService,
-    private val fallbackCatalogRepository: MockCatalogRepository
+    private val apiService: StreamFlowApiService
 ) : CatalogRepository {
 
     override fun getHomeRails(): Flow<List<Rail>> = flow {
@@ -29,13 +28,9 @@ class NeonCatalogRepository @Inject constructor(
                     )
                 )
             }
-            if (rails.isNotEmpty()) {
-                emit(rails)
-            } else {
-                fallbackCatalogRepository.getHomeRails().collect { emit(it) }
-            }
+            emit(rails)
         } catch (e: Exception) {
-            fallbackCatalogRepository.getHomeRails().collect { emit(it) }
+            emit(emptyList())
         }
     }
 
@@ -44,50 +39,42 @@ class NeonCatalogRepository @Inject constructor(
             val dto = apiService.getTitleById(id)
             dto.toDomain()
         } catch (e: Exception) {
-            fallbackCatalogRepository.getTitle(id)
+            null
         }
     }
 
     override suspend fun getSimilarTitles(id: String): List<Title> {
         return try {
-            val title = getTitle(id) ?: return fallbackCatalogRepository.getSimilarTitles(id)
+            val title = getTitle(id) ?: return emptyList()
             val genre = title.genres.firstOrNull() ?: ""
             if (genre.isNotEmpty()) {
                 search(genre).filter { it.id != id }
             } else {
-                fallbackCatalogRepository.getSimilarTitles(id)
+                emptyList()
             }
         } catch (e: Exception) {
-            fallbackCatalogRepository.getSimilarTitles(id)
+            emptyList()
         }
     }
 
     override suspend fun search(query: String): List<Title> {
         return try {
             val dtos = apiService.searchTitles(query)
-            if (dtos.isNotEmpty()) {
-                dtos.map { it.toDomain() }
-            } else {
-                fallbackCatalogRepository.search(query)
-            }
+            dtos.map { it.toDomain() }
         } catch (e: Exception) {
-            fallbackCatalogRepository.search(query)
+            emptyList()
         }
     }
 
     override suspend fun getContinueWatching(): List<Title> {
-        return try {
-            fallbackCatalogRepository.getContinueWatching()
-        } catch (e: Exception) {
-            emptyList()
-        }
+        return emptyList()
     }
 
     override suspend fun addToWatchlist(titleId: String) {
         try {
             apiService.syncWatchlist(WatchlistRequestDto(titleId = titleId, action = "add"))
         } catch (e: Exception) {
-            fallbackCatalogRepository.addToWatchlist(titleId)
+            // Ignored
         }
     }
 
@@ -95,25 +82,21 @@ class NeonCatalogRepository @Inject constructor(
         try {
             apiService.syncWatchlist(WatchlistRequestDto(titleId = titleId, action = "remove"))
         } catch (e: Exception) {
-            fallbackCatalogRepository.removeFromWatchlist(titleId)
+            // Ignored
         }
     }
 
     override suspend fun getWatchlist(): List<Title> {
         return try {
             val dtos = apiService.getUserWatchlist()
-            if (dtos.isNotEmpty()) {
-                dtos.map { it.toDomain() }
-            } else {
-                fallbackCatalogRepository.getWatchlist()
-            }
+            dtos.map { it.toDomain() }
         } catch (e: Exception) {
-            fallbackCatalogRepository.getWatchlist()
+            emptyList()
         }
     }
 
     override suspend fun updateProgress(titleId: String, episodeId: String?, positionSec: Int, durationSec: Int) {
-        fallbackCatalogRepository.updateProgress(titleId, episodeId, positionSec, durationSec)
+        // No-op or sync with API in future
     }
 
     override suspend fun getPlaybackUrl(titleId: String, episodeId: String?): String {
@@ -128,10 +111,10 @@ class NeonCatalogRepository @Inject constructor(
                 }
                 title.hlsManifestPath
             } else {
-                fallbackCatalogRepository.getPlaybackUrl(titleId, episodeId)
+                ""
             }
         } catch (e: Exception) {
-            fallbackCatalogRepository.getPlaybackUrl(titleId, episodeId)
+            ""
         }
     }
 }

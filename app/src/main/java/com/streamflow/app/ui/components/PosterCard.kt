@@ -8,12 +8,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,17 +30,20 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.streamflow.app.ui.theme.AccentPrimary
 import com.streamflow.app.ui.theme.GlassBorder
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Sizes
 import com.streamflow.app.ui.theme.StreamFlowType
 
 /**
- * Rail poster item with glass border and smooth gradient scrim.
+ * Rail poster item with glass border, gold rating badge, and gradient scrim.
  */
 @Composable
 fun PosterCard(
@@ -43,6 +51,7 @@ fun PosterCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     titleLabel: String? = null,
+    ratingLabel: String? = null,
     width: Dp = Sizes.posterCardWidth,
     height: Dp = Sizes.posterCardHeight
 ) {
@@ -70,18 +79,51 @@ fun PosterCard(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Bottom gradient overlay for title legibility
+        // Gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                        startY = 100f
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.9f)
+                        )
                     )
                 )
         )
 
+        // Rating Badge (Gold Star)
+        if (!ratingLabel.isNullOrEmpty()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.Black.copy(alpha = 0.75f))
+                    .border(0.5.dp, AccentPrimary.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Rating",
+                        tint = AccentPrimary,
+                        modifier = Modifier.width(10.dp).height(10.dp)
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = ratingLabel,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // Title Label
         if (titleLabel != null) {
             Box(
                 modifier = Modifier

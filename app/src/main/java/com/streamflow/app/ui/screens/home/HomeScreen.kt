@@ -197,6 +197,7 @@ private fun RailSection(rail: Rail, onTitleClick: (Title) -> Unit) {
                 PosterCard(
                     posterUrl = title.posterUrl,
                     titleLabel = title.name,
+                    ratingLabel = if (title.imdbRating > 0) "${title.imdbRating}" else null,
                     onClick = { onTitleClick(title) }
                 )
             }
