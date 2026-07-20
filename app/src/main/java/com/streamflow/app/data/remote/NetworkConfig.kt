@@ -10,5 +10,7 @@ object NetworkConfig {
 
     var baseUrl: String = DEFAULT_BASE_URL
 
+    const val API_KEY = "streamflow_vega_key_2026"
+
     const val TIMEOUT_SECONDS = 30L
 }

@@ -8,6 +8,8 @@ import okhttp3.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import com.streamflow.app.data.remote.NetworkConfig
+
 @Singleton
 class AuthInterceptor @Inject constructor(
     private val firebaseAuth: FirebaseAuth
@@ -16,27 +18,24 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
+        val requestBuilder = originalRequest.newBuilder()
+            .header("X-API-Key", NetworkConfig.API_KEY)
+
         val currentUser = firebaseAuth.currentUser
-        if (currentUser == null) {
-            return chain.proceed(originalRequest)
-        }
-
-        val token = try {
-            runBlocking {
-                currentUser.getIdToken(false).await().token
+        if (currentUser != null) {
+            val token = try {
+                runBlocking {
+                    currentUser.getIdToken(false).await().token
+                }
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            null
+
+            if (!token.isNullOrEmpty()) {
+                requestBuilder.header("Authorization", "Bearer $token")
+            }
         }
 
-        val authenticatedRequest = if (!token.isNullOrEmpty()) {
-            originalRequest.newBuilder()
-                .header("Authorization", "Bearer $token")
-                .build()
-        } else {
-            originalRequest
-        }
-
-        return chain.proceed(authenticatedRequest)
+        return chain.proceed(requestBuilder.build())
     }
 }
