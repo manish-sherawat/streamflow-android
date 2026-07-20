@@ -1,0 +1,41 @@
+package com.streamflow.app.data.remote.api
+
+import com.streamflow.app.data.remote.dto.CatalogResponseDto
+import com.streamflow.app.data.remote.dto.RailDto
+import com.streamflow.app.data.remote.dto.TitleDto
+import com.streamflow.app.data.remote.dto.WatchlistRequestDto
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface StreamFlowApiService {
+
+    @GET("v1/catalog")
+    suspend fun getCatalog(): CatalogResponseDto
+
+    @GET("v1/catalog/featured")
+    suspend fun getFeaturedTitles(): List<TitleDto>
+
+    @GET("v1/catalog/rails")
+    suspend fun getHomeRails(): List<RailDto>
+
+    @GET("v1/titles/{id}")
+    suspend fun getTitleById(
+        @Path("id") titleId: String
+    ): TitleDto
+
+    @GET("v1/titles/search")
+    suspend fun searchTitles(
+        @Query("q") query: String
+    ): List<TitleDto>
+
+    @GET("v1/watchlist")
+    suspend fun getUserWatchlist(): List<TitleDto>
+
+    @POST("v1/watchlist/sync")
+    suspend fun syncWatchlist(
+        @Body request: WatchlistRequestDto
+    ): List<TitleDto>
+}

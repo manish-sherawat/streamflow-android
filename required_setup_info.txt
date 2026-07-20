@@ -1,0 +1,46 @@
+================================================================================
+STREAMFLOW APP - REQUIRED INFORMATION & CHECKLIST
+================================================================================
+
+To connect your StreamFlow Android App with your Website backend (Neon PostgreSQL) 
+and Firebase Authentication, please provide/confirm the following details:
+
+1. BACKEND API BASE URL
+--------------------------------------------------------------------------------
+- Base URL of your Website / API Server (e.g., https://yourdomain.com/api or 
+  https://api.yourdomain.com).
+- If the backend API is not deployed yet, let us know whether you are using 
+  Next.js API routes, Express.js, or another framework.
+
+2. API ENDPOINTS & RESPONSE SCHEMA (IF BACKEND ALREADY EXISTS)
+--------------------------------------------------------------------------------
+- Catalog Endpoint: (e.g., GET /api/v1/movies or GET /api/v1/catalog)
+- Detail & Stream Links Endpoint: (e.g., GET /api/v1/movies/{id}/streams)
+- Category / Trending Endpoint: (e.g., GET /api/v1/trending)
+- User Watchlist / Favorites Endpoints: (e.g., POST/GET /api/v1/user/favorites)
+
+3. FIREBASE AUTHENTICATION CONFIRMATION
+--------------------------------------------------------------------------------
+- Confirm if the existing `app/google-services.json` file in the project is 
+  configured for your Firebase project.
+- Ensure Email/Password sign-in (and Google Sign-In, if needed) is enabled 
+  in your Firebase Console under Authentication > Sign-in method.
+
+4. TMDB API KEY (RECOMMENDED)
+--------------------------------------------------------------------------------
+- TMDB API Key (v3 API key or v4 Bearer Token) if you want the app or backend 
+  to fetch movie backdrops, posters, cast, and trailers dynamically.
+
+5. SAMPLE STREAM LINKS FOR EXOPLAYER TESTING
+--------------------------------------------------------------------------------
+- 1 or 2 working test stream URLs (e.g., HLS `.m3u8` links or direct `.mp4` 
+  video links) to verify native video playback inside StreamFlow's player.
+
+================================================================================
+STATUS & NEXT STEPS:
+Once you review this checklist, share the available endpoints/URLs, and we will:
+1. Build the Ktor/Retrofit API client service in StreamFlow.
+2. Update Repository layer to seamlessly fetch catalog data from your Neon API.
+3. Wire up Firebase Authentication with token headers for secure Neon API requests.
+4. Verify native ExoPlayer stream playback.
+================================================================================

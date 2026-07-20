@@ -1,0 +1,46 @@
+================================================================================
+STREAMFLOW - ADMIN PANEL FEATURE SPECIFICATION & ROADMAP
+================================================================================
+
+1. DASHBOARD & ANALYTICS
+--------------------------------------------------------------------------------
+- Real-time Metrics: Active users, concurrent streams, DAU/MAU, retention rate.
+- Popular Content: Top 10 most-watched movies, trending series, top search queries.
+- System & Stream Health: Playback error count, broken link flags, API latency.
+- Demographics: OS version distribution (Android version), user geography.
+
+2. CONTENT & CATALOG MANAGEMENT (CMS)
+--------------------------------------------------------------------------------
+- Movies & TV Series Manager: CRUD operations on Firestore media items.
+- Home Screen Layout Manager: Drag-and-drop hero banner carousel & custom lists 
+  ("Editor's Pick", "Trending Now").
+- Multi-Source Stream Links: Manage primary HLS/MP4 streams, fallback links, 
+  audio tracks, resolutions (1080p, 4K), and VTT/SRT subtitle files.
+- Automated TMDB Sync: Fetch metadata, posters, backdrops, cast & crew via TMDB ID.
+- Stream Health Checker: Automated periodic link status check (ping streams).
+
+3. USER MANAGEMENT & MODERATION
+--------------------------------------------------------------------------------
+- Account Directory: Search/filter users by email, UID, status (Free, VIP, Banned).
+- Activity Inspector: View user watch history, watchlist/favorites, active devices.
+
+
+
+4. USER ERROR & BUG REPORTING
+--------------------------------------------------------------------------------
+- Stream Report Inbox: View user reports ("Video dead", "Audio out of sync").
+- Quick Stream Fix: Update/replace broken stream link directly from report ticket.
+
+5. REMOTE CONFIG & APP UPDATE ENGINE
+--------------------------------------------------------------------------------
+- Version Control: Set min_required_version (force update) and latest_version.
+- Maintenance Mode: Global toggle to show dynamic maintenance screen to app users.
+- Feature Flags: Enable/disable downloads, external player support, or ads remotely.
+
+6. PUSH NOTIFICATIONS & ENGAGEMENT
+--------------------------------------------------------------------------------
+- FCM Broadcaster: Create and schedule push notifications via Firebase Cloud Messaging.
+- Deep Link Support: Attach content ID to notification to open movie detail directly.
+- Audience Segmentation: Target notifications by user activity or watchlist contents.
+
+
