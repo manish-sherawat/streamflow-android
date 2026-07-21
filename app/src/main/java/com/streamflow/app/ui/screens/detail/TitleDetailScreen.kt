@@ -240,8 +240,17 @@ private fun DetailContent(
         // Episodes Section with Season Selector & View Mode Toggle
         if (isSeries && title.episodes.isNotEmpty()) {
             item {
-                var selectedSeason by remember { mutableStateOf("Season 1") }
+                val availableSeasons = remember(title.episodes) {
+                    title.episodes.map { "Season ${it.seasonNumber}" }.distinct().ifEmpty { listOf("Season 1") }
+                }
+                var selectedSeason by remember(title.id) { mutableStateOf(availableSeasons.firstOrNull() ?: "Season 1") }
                 var isListView by remember { mutableStateOf(false) }
+
+                val selectedSeasonNum = selectedSeason.replace("Season ", "").toIntOrNull() ?: 1
+                val filteredEpisodes = remember(title.episodes, selectedSeasonNum) {
+                    val list = title.episodes.filter { it.seasonNumber == selectedSeasonNum }
+                    if (list.isNotEmpty()) list else title.episodes
+                }
 
                 Column {
                     Row(
@@ -252,7 +261,7 @@ private fun DetailContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Episodes",
+                            text = "Episodes (${filteredEpisodes.size})",
                             style = StreamFlowType.sectionHeader,
                             color = TextPrimary
                         )
@@ -278,7 +287,7 @@ private fun DetailContent(
                         contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
                     ) {
-                        items(listOf("Season 1", "Season 2", "Bonus Content")) { season ->
+                        items(availableSeasons) { season ->
                             val isSelected = season == selectedSeason
                             Text(
                                 text = season,
@@ -302,7 +311,7 @@ private fun DetailContent(
                             contentPadding = PaddingValues(horizontal = Spacing.md),
                             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                         ) {
-                            items(title.episodes, key = { it.id }) { ep: Episode ->
+                            items(filteredEpisodes, key = { it.id }) { ep: Episode ->
                                 EpisodeCard(episode = ep, onClick = { onPlay(title.id, ep.id) })
                             }
                         }
@@ -311,7 +320,7 @@ private fun DetailContent(
                             modifier = Modifier.padding(horizontal = Spacing.md),
                             verticalArrangement = Arrangement.spacedBy(Spacing.xs)
                         ) {
-                            title.episodes.forEach { ep ->
+                            filteredEpisodes.forEach { ep ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()

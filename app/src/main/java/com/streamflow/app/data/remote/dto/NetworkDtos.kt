@@ -28,20 +28,28 @@ data class EpisodeDto(
     @SerialName("id") val id: String = "",
     @SerialName("title") val title: String = "",
     @SerialName("season_number") val seasonNumber: Int = 1,
+    @SerialName("seasonNumber") val altSeasonNumber: Int? = null,
     @SerialName("episode_number") val episodeNumber: Int = 1,
+    @SerialName("episodeNumber") val altEpisodeNumber: Int? = null,
     @SerialName("duration_sec") val durationSec: Int = 0,
+    @SerialName("durationSec") val altDurationSec: Int? = null,
     @SerialName("thumb_url") val thumbUrl: String = "",
+    @SerialName("thumbUrl") val altThumbUrl: String? = null,
     @SerialName("hls_path") val hlsPath: String = "",
+    @SerialName("hlsPath") val altHlsPath: String? = null,
+    @SerialName("download_url") val downloadUrl: String = "",
+    @SerialName("downloadUrl") val altDownloadUrl: String? = null,
     @SerialName("watched_position_sec") val watchedPositionSec: Int = 0
 ) {
     fun toDomain(): Episode = Episode(
         id = id,
         title = title,
-        seasonNumber = seasonNumber,
-        episodeNumber = episodeNumber,
-        durationSec = durationSec,
-        thumbUrl = thumbUrl,
-        hlsPath = hlsPath,
+        seasonNumber = altSeasonNumber ?: seasonNumber,
+        episodeNumber = altEpisodeNumber ?: episodeNumber,
+        durationSec = altDurationSec ?: durationSec,
+        thumbUrl = (altThumbUrl ?: thumbUrl).ifEmpty { "" },
+        hlsPath = (altHlsPath ?: hlsPath).ifEmpty { "" },
+        downloadUrl = (altDownloadUrl ?: downloadUrl).ifEmpty { "" },
         watchedPositionSec = watchedPositionSec
     )
 }

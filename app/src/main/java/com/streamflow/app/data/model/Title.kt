@@ -17,6 +17,7 @@ data class Episode(
     val durationSec: Int,
     val thumbUrl: String,
     val hlsPath: String,
+    val downloadUrl: String = "",
     val watchedPositionSec: Int = 0
 ) {
     val progressFraction: Float
