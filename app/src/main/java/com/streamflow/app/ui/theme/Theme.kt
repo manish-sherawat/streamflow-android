@@ -2,34 +2,40 @@ package com.streamflow.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-// Dark is the only supported theme for v1 (see design.md §7).
-// Components should reference MaterialTheme.colorScheme, never these hex
-// values directly, so a light theme can be added later without touching UI code.
+// StreamFlow — dark-only minimalist theme.
+// Components reference MaterialTheme.colorScheme exclusively; never raw hex values.
 private val StreamFlowDarkColors = darkColorScheme(
-    background = BgBase,
-    surface = BgElevated,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    primary = AccentPrimary,
-    onPrimary = TextPrimary,
-    secondary = AccentFocus,
-    onSecondary = TextPrimary,
-    outline = GlassBorder,
-    surfaceVariant = BgGradientTop,
-    onSurfaceVariant = TextSecondary
+    background          = BgBase,
+    surface             = BgCard,
+    surfaceVariant      = BgElevated,
+    onBackground        = TextPrimary,
+    onSurface           = TextPrimary,
+    onSurfaceVariant    = TextSecondary,
+    primary             = AccentPrimary,
+    onPrimary           = BgBase,
+    secondary           = AccentSecondary,
+    onSecondary         = BgBase,
+    outline             = GlassBorder,
+    outlineVariant      = Divider,
+    scrim               = BgBase,
+    inverseSurface      = TextPrimary,
+    inverseOnSurface    = BgBase,
+    error               = Color(0xFFFF5252),
+    onError             = BgBase
 )
 
 @Composable
 fun StreamFlowTheme(
-    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = isSystemInDarkTheme(), // reserved for future light theme
+    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colorScheme = StreamFlowDarkColors,
-        typography = StreamFlowMaterialType,
-        content = content
+        typography  = StreamFlowMaterialType,
+        content     = content
     )
 }

@@ -26,9 +26,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.streamflow.app.ui.theme.GlassFill
+import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
+
+// Dark-base shimmer: three-stop sweep from card surface → slight highlight → back
+private val shimmerBase    = Color(0xFF161616)
+private val shimmerPeak    = Color(0xFF2C2C2C)
 
 @Composable
 fun ShimmerBrush(
@@ -36,20 +40,16 @@ fun ShimmerBrush(
     showShimmer: Boolean = true
 ): Brush {
     if (!showShimmer) {
-        return Brush.linearGradient(colors = listOf(GlassFill, GlassFill))
+        return Brush.linearGradient(colors = listOf(shimmerBase, shimmerBase))
     }
-    val shimmerColors = listOf(
-        Color.White.copy(alpha = 0.05f),
-        Color.White.copy(alpha = 0.2f),
-        Color.White.copy(alpha = 0.05f)
-    )
+    val shimmerColors = listOf(shimmerBase, shimmerPeak, shimmerBase)
 
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val translateAnimation by transition.animateFloat(
         initialValue = 0f,
-        targetValue = targetValue,
+        targetValue  = targetValue,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            animation  = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmerTranslate"
@@ -57,8 +57,8 @@ fun ShimmerBrush(
 
     return Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset.Zero,
-        end = Offset(x = translateAnimation, y = translateAnimation)
+        start  = Offset.Zero,
+        end    = Offset(x = translateAnimation, y = translateAnimation * 0.4f)
     )
 }
 
@@ -78,30 +78,32 @@ fun ShimmerBox(
 @Composable
 fun RailShimmerSkeleton(
     modifier: Modifier = Modifier,
-    cardWidth: Dp = 108.dp,
-    cardHeight: Dp = 160.dp
+    cardWidth: Dp = 120.dp,
+    cardHeight: Dp = 178.dp
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(vertical = Spacing.sm)) {
+        // Rail header placeholder
         ShimmerBox(
             modifier = Modifier
-                .width(140.dp)
-                .height(20.dp)
-                .padding(horizontal = Spacing.md),
+                .padding(horizontal = Spacing.md)
+                .width(100.dp)
+                .height(14.dp),
             cornerRadius = 4.dp
         )
-        Spacer(modifier = Modifier.height(Spacing.xs))
+        Spacer(modifier = Modifier.height(Spacing.sm))
+        // Card row placeholders
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.md),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
             repeat(4) {
                 ShimmerBox(
                     modifier = Modifier
                         .width(cardWidth)
                         .height(cardHeight),
-                    cornerRadius = 8.dp
+                    cornerRadius = 10.dp
                 )
             }
         }

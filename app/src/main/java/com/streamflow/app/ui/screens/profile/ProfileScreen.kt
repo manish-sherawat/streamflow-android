@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,16 +22,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadDone
-import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -44,7 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.streamflow.app.data.model.Title
 import com.streamflow.app.ui.components.AdminAddTitleDialog
@@ -53,13 +59,16 @@ import com.streamflow.app.ui.components.PrimaryButton
 import com.streamflow.app.ui.components.ProfileSelectionDialog
 import com.streamflow.app.ui.components.SecondaryButton
 import com.streamflow.app.ui.theme.AccentPrimary
+import com.streamflow.app.ui.theme.AccentStar
 import com.streamflow.app.ui.theme.BgBase
+import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.BgElevated
+import com.streamflow.app.ui.theme.Divider
 import com.streamflow.app.ui.theme.GlassBorder
-import com.streamflow.app.ui.theme.GlassFill
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 import com.streamflow.app.ui.theme.StreamFlowType
+import com.streamflow.app.ui.theme.TextMuted
 import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 
@@ -70,12 +79,12 @@ fun ProfileScreen(
     onSignOut: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val session by viewModel.userSession.collectAsState()
-    val isAuthenticated by viewModel.isAuthenticated.collectAsState()
+    val session            by viewModel.userSession.collectAsState()
+    val isAuthenticated    by viewModel.isAuthenticated.collectAsState()
     val isDataSaverEnabled by viewModel.isDataSaverEnabled.collectAsState()
-    val downloadedTitles by viewModel.downloadedTitles.collectAsState()
+    val downloadedTitles   by viewModel.downloadedTitles.collectAsState()
 
-    var showProfileDialog by remember { mutableStateOf(false) }
+    var showProfileDialog  by remember { mutableStateOf(false) }
     var showAdminAddDialog by remember { mutableStateOf(false) }
 
     val activeProfile = session?.profiles?.find { it.id == session?.activeProfileId }
@@ -103,82 +112,99 @@ fun ProfileScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgBase)
-            .padding(horizontal = Spacing.md),
-        contentPadding = PaddingValues(top = 56.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+            .background(BgBase),
+        contentPadding = PaddingValues(bottom = 110.dp)
     ) {
+        // Page header with status bars safe space
         item {
-            Text("Account & Settings", style = StreamFlowType.displayTitle)
+            Text(
+                "Profile",
+                style = StreamFlowType.displayTitle,
+                color = TextPrimary,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(
+                        horizontal = Spacing.md,
+                        vertical = Spacing.sm
+                    )
+            )
         }
 
         if (!isAuthenticated || session == null) {
-            // Unauthenticated Login Prompt Card
+            // ── Unauthenticated state ─────────────────────────────────────────
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = Spacing.md)
                         .clip(Radius.card)
-                        .background(BgElevated)
-                        .border(1.dp, GlassBorder, Radius.card)
+                        .background(BgCard)
                         .padding(Spacing.lg),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Person,
-                        contentDescription = null,
-                        tint = AccentPrimary,
-                        modifier = Modifier.size(56.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(BgElevated),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Person,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(Spacing.md))
+                    Text(
+                        "Sign in to StreamFlow",
+                        style = StreamFlowType.sectionHeader.copy(fontWeight = FontWeight.Bold),
+                        color = TextPrimary
                     )
                     Text(
-                        "Sign In to StreamFlow",
-                        style = StreamFlowType.titleHeader,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(top = Spacing.xs)
-                    )
-                    Text(
-                        "Access your personal watchlist, multi-profile switching, and admin management features.",
+                        "Access your watchlist, profiles, and settings.",
                         style = StreamFlowType.body,
                         color = TextSecondary,
-                        modifier = Modifier.padding(top = Spacing.xs, bottom = Spacing.md)
+                        modifier = Modifier.padding(top = 4.dp, bottom = Spacing.lg)
                     )
-
                     PrimaryButton(
-                        label = "Sign In / Register",
+                        label = "Sign In",
                         icon = Icons.AutoMirrored.Filled.Login,
                         onClick = onOpenAuth,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+                Spacer(modifier = Modifier.height(Spacing.md))
             }
         } else {
-            // Authenticated User Profile Card
+            // ── Authenticated user card ───────────────────────────────────────
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = Spacing.md)
                         .clip(Radius.card)
-                        .background(BgElevated)
-                        .border(1.dp, GlassBorder, Radius.card)
-                        .padding(Spacing.lg)
+                        .background(BgCard)
+                        .padding(Spacing.md)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        // Avatar
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(52.dp)
                                 .clip(CircleShape)
-                                .background(AccentPrimary.copy(alpha = 0.2f))
-                                .border(2.dp, AccentPrimary, CircleShape),
+                                .background(BgElevated),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(36.dp)
+                                tint = TextSecondary,
+                                modifier = Modifier.size(28.dp)
                             )
                         }
 
@@ -187,136 +213,176 @@ fun ProfileScreen(
                                 .weight(1f)
                                 .padding(start = Spacing.md)
                         ) {
-                            Text(activeProfile?.name ?: "User Profile", style = StreamFlowType.titleHeader)
-                            Text(session?.email ?: "user@streamflow.app", style = StreamFlowType.body, color = TextSecondary)
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                            Text(
+                                activeProfile?.name ?: "User Profile",
+                                style = StreamFlowType.sectionHeader.copy(fontWeight = FontWeight.SemiBold),
+                                color = TextPrimary
+                            )
+                            Text(
+                                session?.email ?: "user@streamflow.app",
+                                style = StreamFlowType.caption,
+                                color = TextSecondary
+                            )
+                            // Subscription tier chip
+                            Text(
+                                session?.subscriptionTier ?: "Ultra 4K",
+                                style = StreamFlowType.caption.copy(fontWeight = FontWeight.SemiBold),
+                                color = AccentStar,
                                 modifier = Modifier
-                                    .padding(top = Spacing.xs)
-                                    .clip(Radius.pill)
-                                    .background(GlassFill)
-                                    .padding(horizontal = 10.dp, vertical = 2.dp)
-                            ) {
-                                Icon(Icons.Filled.Star, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(session?.subscriptionTier ?: "Ultra 4K HDR", style = StreamFlowType.caption, color = AccentPrimary)
-                            }
+                                    .padding(top = 4.dp)
+                                    .background(BgElevated, Radius.chip)
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(Spacing.md))
+                    HorizontalDivider(color = Divider, thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(Spacing.sm))
 
-                    SecondaryButton(
-                        label = "Switch Profile",
+                    SettingsRow(
                         icon = Icons.Filled.SwapHoriz,
-                        onClick = { showProfileDialog = true },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Switch Profile",
+                        onClick = { showProfileDialog = true }
                     )
                 }
+                Spacer(modifier = Modifier.height(Spacing.md))
             }
 
-            // Admin Management Panel
+            // ── Viewing Analytics & Watch Stats ──────────────────────────────────
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.md)
+                        .clip(Radius.card)
+                        .background(BgCard)
+                        .border(1.dp, GlassBorder, Radius.card)
+                        .padding(Spacing.md)
+                ) {
+                    Text(
+                        text = "Viewing Analytics",
+                        style = StreamFlowType.sectionHeader.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
+                        color = TextPrimary
+                    )
+                    Spacer(Modifier.height(Spacing.xs))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "28.5h", style = StreamFlowType.sectionHeader.copy(fontWeight = FontWeight.Bold, color = AccentPrimary))
+                            Text(text = "Watch Time", style = StreamFlowType.caption.copy(fontSize = 10.sp), color = TextSecondary)
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Anime", style = StreamFlowType.sectionHeader.copy(fontWeight = FontWeight.Bold, color = AccentStar))
+                            Text(text = "Top Genre", style = StreamFlowType.caption.copy(fontSize = 10.sp), color = TextSecondary)
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "🔥 5 Days", style = StreamFlowType.sectionHeader.copy(fontWeight = FontWeight.Bold, color = Color(0xFFFF4500)))
+                            Text(text = "Streak", style = StreamFlowType.caption.copy(fontSize = 10.sp), color = TextSecondary)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(Spacing.md))
+            }
+
+            // ── Admin Panel ───────────────────────────────────────────────────
             if (isAdmin) {
                 item {
-                    Text("Admin Management", style = StreamFlowType.sectionHeader)
-                }
-
-                item {
+                    ProfileSectionLabel("Admin")
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = Spacing.md)
                             .clip(Radius.card)
-                            .background(BgElevated)
-                            .border(1.dp, AccentPrimary.copy(alpha = 0.4f), Radius.card)
-                            .padding(Spacing.lg)
+                            .background(BgCard)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.AdminPanelSettings, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(28.dp))
-                            Column(modifier = Modifier.padding(start = Spacing.xs)) {
-                                Text("Admin Catalog Control Panel", style = StreamFlowType.titleHeader)
-                                Text("Manage live movies and shows in Cloud Firestore", style = StreamFlowType.caption, color = TextSecondary)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(Spacing.md))
-
-                        PrimaryButton(
-                            label = "Add New Movie / Series",
+                        SettingsRow(
                             icon = Icons.Filled.Add,
-                            onClick = { showAdminAddDialog = true },
-                            modifier = Modifier.fillMaxWidth()
+                            label = "Add New Title",
+                            sublabel = "Add movie or series to catalog",
+                            onClick = { showAdminAddDialog = true }
                         )
-
-                        Spacer(modifier = Modifier.height(Spacing.xs))
-
-                        SecondaryButton(
-                            label = "Seed Initial Cloud Catalog",
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 52.dp),
+                            color = Divider,
+                            thickness = 0.5.dp
+                        )
+                        SettingsRow(
                             icon = Icons.Filled.CloudUpload,
-                            onClick = { viewModel.seedCatalog() },
-                            modifier = Modifier.fillMaxWidth()
+                            label = "Seed Cloud Catalog",
+                            sublabel = "Upload initial data to Firestore",
+                            onClick = { viewModel.seedCatalog() }
                         )
                     }
+                    Spacer(modifier = Modifier.height(Spacing.md))
                 }
             }
         }
 
-        // Settings Section
+        // ── Preferences ───────────────────────────────────────────────────────
         item {
-            Text("Preferences", style = StreamFlowType.sectionHeader)
-        }
-
-        item {
+            ProfileSectionLabel("Preferences")
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = Spacing.md)
                     .clip(Radius.card)
-                    .background(BgElevated)
-                    .border(1.dp, GlassBorder, Radius.card)
-                    .padding(Spacing.md)
+                    .background(BgCard)
             ) {
-                // Data Saver Toggle
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.md, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                    Icon(
+                        Icons.Filled.NetworkCheck,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = Spacing.md)
                     ) {
-                        Icon(Icons.Filled.NetworkCheck, contentDescription = null, tint = AccentPrimary)
-                        Column(modifier = Modifier.padding(start = Spacing.md)) {
-                            Text("Data Saver Mode", style = StreamFlowType.titleHeader)
-                            Text(
-                                "Caps video playback bitrate to 1.5 Mbps to reduce mobile data usage.",
-                                style = StreamFlowType.caption,
-                                color = TextSecondary
-                            )
-                        }
+                        Text("Data Saver", style = StreamFlowType.body.copy(fontWeight = FontWeight.Medium), color = TextPrimary)
+                        Text("Cap playback to 1.5 Mbps", style = StreamFlowType.caption, color = TextSecondary)
                     }
                     Switch(
                         checked = isDataSaverEnabled,
                         onCheckedChange = viewModel::toggleDataSaver,
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = TextPrimary,
-                            checkedTrackColor = AccentPrimary
+                            checkedThumbColor  = BgBase,
+                            checkedTrackColor  = TextPrimary,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = BgElevated
                         )
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(Spacing.md))
         }
 
-        // Offline Downloads Section
+        // ── Offline Downloads ─────────────────────────────────────────────────
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Offline Downloads", style = StreamFlowType.sectionHeader)
-                Text("${downloadedTitles.size} Saved", style = StreamFlowType.caption, color = TextSecondary)
+                Text("Downloads", style = StreamFlowType.sectionHeader, color = TextPrimary)
+                Text(
+                    "${downloadedTitles.size} saved",
+                    style = StreamFlowType.caption,
+                    color = TextSecondary
+                )
             }
+            Spacer(modifier = Modifier.height(Spacing.sm))
         }
 
         item {
@@ -324,21 +390,30 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = Spacing.md)
                         .clip(Radius.card)
-                        .background(GlassFill)
+                        .background(BgCard)
                         .padding(Spacing.lg),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Filled.DownloadDone, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(40.dp))
+                    Icon(
+                        Icons.Filled.DownloadDone,
+                        contentDescription = null,
+                        tint = TextMuted,
+                        modifier = Modifier.size(36.dp)
+                    )
                     Text(
-                        "No offline downloads yet.",
+                        "No downloads yet",
                         style = StreamFlowType.body,
                         color = TextSecondary,
                         modifier = Modifier.padding(top = Spacing.xs)
                     )
                 }
             } else {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = Spacing.md),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
                     items(downloadedTitles, key = { it.id }) { title ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             PosterCard(
@@ -348,40 +423,108 @@ fun ProfileScreen(
                             )
                             Row(
                                 modifier = Modifier
-                                    .padding(top = 4.dp)
+                                    .padding(top = 5.dp)
                                     .clickable { viewModel.removeDownload(title.id) },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = TextSecondary, modifier = Modifier.size(14.dp))
-                                Text("Remove", style = StreamFlowType.caption, color = TextSecondary, modifier = Modifier.padding(start = 2.dp))
+                                Icon(
+                                    Icons.Filled.Delete,
+                                    contentDescription = "Remove",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    "Remove",
+                                    style = StreamFlowType.caption,
+                                    color = TextSecondary,
+                                    modifier = Modifier.padding(start = 3.dp)
+                                )
                             }
                         }
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(Spacing.md))
         }
 
-        // Sign Out (if logged in)
+        // ── Sign Out ──────────────────────────────────────────────────────────
         if (isAuthenticated && session != null) {
             item {
-                Spacer(modifier = Modifier.height(Spacing.md))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(Radius.pill)
-                        .background(GlassFill)
-                        .border(1.dp, GlassBorder, Radius.pill)
+                        .padding(horizontal = Spacing.md)
+                        .clip(Radius.card)
+                        .background(BgCard)
                         .clickable {
                             viewModel.logout()
                             onSignOut()
                         }
-                        .padding(vertical = Spacing.md),
-                    horizontalArrangement = Arrangement.Center,
+                        .padding(horizontal = Spacing.md, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = TextPrimary)
-                    Text("Sign Out", style = StreamFlowType.buttonLabel, color = TextPrimary, modifier = Modifier.padding(start = Spacing.xs))
+                    Icon(
+                        Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = null,
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        "Sign Out",
+                        style = StreamFlowType.body.copy(fontWeight = FontWeight.Medium),
+                        color = Color(0xFFFF5252),
+                        modifier = Modifier.padding(start = Spacing.md)
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileSectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = StreamFlowType.caption.copy(
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp
+        ),
+        color = TextSecondary,
+        modifier = Modifier.padding(
+            horizontal = Spacing.md,
+            vertical = Spacing.xs
+        )
+    )
+}
+
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    label: String,
+    sublabel: String? = null,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = Spacing.md, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = TextSecondary,
+            modifier = Modifier.size(20.dp)
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = Spacing.md)
+        ) {
+            Text(label, style = StreamFlowType.body.copy(fontWeight = FontWeight.Medium), color = TextPrimary)
+            if (sublabel != null) {
+                Text(sublabel, style = StreamFlowType.caption, color = TextSecondary)
             }
         }
     }

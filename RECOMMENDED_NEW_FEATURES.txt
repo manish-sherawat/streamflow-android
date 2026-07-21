@@ -1,0 +1,51 @@
+================================================================================
+       STREAMFLOW ANDROID - PROPOSED & RECOMMENDED FUTURE FEATURES
+================================================================================
+
+This document outlines remaining high-impact feature recommendations 
+for StreamFlow Android across all app screens and the Video Player.
+
+
+--------------------------------------------------------------------------------
+2. HOME SCREEN (HomeScreen.kt)
+--------------------------------------------------------------------------------
+[ ] Auto-Playing Silent Video Previews:
+    - Hero banner automatically previews a 10-second silent trailer loop when focused.
+[ ] "Coming Soon" & Remind Me Pipeline:
+    - Upcoming releases rail with a "Remind Me" bell button to schedule push notifications.
+[ ] Personalized "Because You Watched X":
+    - Recommendation rails tailored dynamically to user watch history.
+
+--------------------------------------------------------------------------------
+3. TITLE DETAIL SCREEN (TitleDetailScreen.kt)
+--------------------------------------------------------------------------------
+[ ] In-App Official Trailer Player Modal:
+    - Tapping "Watch Trailer" plays the trailer in a floating video dialog.
+[ ] Season Bulk Download Button:
+    - Ability to download entire seasons with one tap ("Download Season 1").
+
+--------------------------------------------------------------------------------
+4. SEARCH SCREEN (SearchScreen.kt)
+--------------------------------------------------------------------------------
+[ ] Voice Search (Speech-to-Text):
+    - Microphone button on search bar allowing voice queries.
+[ ] Advanced Multi-Filters:
+    - Filter matrix combining Content Rating (PG-13, R, TV-MA), Language, and Studio.
+[ ] Popular Tag Cloud:
+    - Interactive trending search tags (#Marvel, #SciFi, #TopAnime, #Cyberpunk).
+
+--------------------------------------------------------------------------------
+5. WATCHLIST / MY LIST SCREEN (WatchlistScreen.kt)
+--------------------------------------------------------------------------------
+[ ] Custom Folders & Playlists:
+    - Ability to organize saved titles into custom lists (e.g. "Anime Favorites", "Weekend Binge").
+[ ] Watch Status Indicators:
+    - Visual badges for "Unwatched", "In Progress", and "Completed".
+
+--------------------------------------------------------------------------------
+6. PROFILE & ACCOUNT SCREEN (ProfileScreen.kt)
+--------------------------------------------------------------------------------
+[ ] Multi-User Profile Management & Kids Mode:
+    - Avatar creation, PIN protection for adult profiles, and curated Kids profile mode.
+[ ] Download Manager & Storage Settings:
+    - Management screen for downloaded videos with SD card / internal storage path selector.

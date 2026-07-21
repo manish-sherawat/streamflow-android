@@ -2,30 +2,39 @@ package com.streamflow.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Ultra-Rich Dark Backgrounds
-val BgBase = Color(0xFF090C15)
-val BgElevated = Color(0xFF131929)
-val BgGradientTop = Color(0xFF1B2438)
+// ─── StreamFlow Minimalist Palette ──────────────────────────────────────────
+// Philosophy: Pure black base, single electric-blue accent, near-zero saturation.
+// Depth is achieved through contrast, not color or glass effects.
 
-// Glassmorphism & Frosted Effects
-val GlassFill = Color(0x24FFFFFF)      // 14% frosted fill
-val GlassBorder = Color(0x3DFFC107)    // Gold-tinted border
-val GlassHighlight = Color(0x4000E5FF) // Cyan edge glow
+// Backgrounds — layered darkness
+val BgBase      = Color(0xFF0A0A0A)   // True black canvas
+val BgCard      = Color(0xFF161616)   // Card surface
+val BgElevated  = Color(0xFF1C1C1C)   // Elevated sheets / dialogs
+val BgInput     = Color(0xFF141414)   // Input field fill
+val BgGradientTop = Color(0xFF0A0A0A) // kept for compat (same as base)
 
-// Text Typography Colors
-val TextPrimary = Color(0xFFFFFFFF)
-val TextSecondary = Color(0xFFCBD5E1)
-val TextTertiary = Color(0xFF94A3B8)
+// Text hierarchy
+val TextPrimary   = Color(0xFFF0F0F0) // Near-white primary
+val TextSecondary = Color(0xFF8A8A8A) // Mid-gray labels
+val TextTertiary  = Color(0xFF444444) // Muted hints / placeholders
+val TextMuted     = Color(0xFF3A3A3A) // Disabled / inactive icons
 
-// Vibrant Accents (Electric Amber Gold & Neon Cyan)
-val AccentPrimary = Color(0xFFFFB800)   // Gold Highlight
-val AccentSecondary = Color(0xFF00E5FF) // Neon Cyan
-val AccentMagenta = Color(0xFFFF2A6D)   // Hot Pink / Red accent
-val AccentFocus = Color(0xFFFFAB00)     // Warm Amber
+// Single accent — Electric Blue
+val AccentPrimary   = Color(0xFF4F8EF7) // Electric blue CTA
+val AccentSecondary = Color(0xFF7BB0FF) // Lighter blue hover/secondary
+val AccentFocus     = Color(0xFF4F8EF7) // kept alias for compat
+val AccentMagenta   = Color(0xFF4F8EF7) // repurposed alias → blue
+val AccentStar      = Color(0xFFFACC15) // Amber — rating stars only
+val AccentCream     = Color(0xFFF0F0F0) // alias → TextPrimary
 
-// Badges & Metadata Pills
-val PillBg = Color(0x33FFB800)
-val PillBorder = Color(0x66FFB800)
+// Dividers & borders (ultra-subtle)
+val Divider     = Color(0xFF1E1E1E)   // Hairline separator
+val GlassBorder = Color(0xFF2A2A2A)   // Subtle card outline
+val GlassHighlight = Color(0xFF2A2A2A) // compat alias
 
-// Dividers & Separators
-val Divider = Color(0x26FFFFFF)
+// Chip / Pill surfaces
+val PillBg     = Color(0xFF1E1E1E)    // Flat dark chip background
+val PillBorder = Color(0xFF2A2A2A)    // Chip border (mostly unused)
+
+// Glass fill (kept for compat — mapped to card bg)
+val GlassFill = Color(0xCC161616.toInt()) // 80% opaque card bg, for compat

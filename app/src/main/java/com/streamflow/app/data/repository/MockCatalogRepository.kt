@@ -41,6 +41,48 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
         )
     }
 
+    private val animeTitles = listOf(
+        Title(
+            id = "a1", name = "Solo Leveling: Arise", type = TitleType.SERIES,
+            synopsis = "In a world where hunters must battle deadly monsters, the weakest hunter receives a mysterious quest line that allows him to level up endlessly.",
+            posterUrl = "https://picsum.photos/seed/sololeveling/400/600",
+            backdropUrl = "https://picsum.photos/seed/sololeveling-bg/1200/800",
+            imdbRating = 8.9, releaseYear = 2025,
+            genres = listOf("Anime", "Action", "Fantasy"),
+            is4kHdr = true,
+            hlsManifestPath = TEST_STREAM_1
+        ),
+        Title(
+            id = "a2", name = "Demon Blade: Infinity", type = TitleType.SERIES,
+            synopsis = "A young swordmaster embarks on a perilous mission through an infinite labyrinth to save his sister and defeat ancient evil.",
+            posterUrl = "https://picsum.photos/seed/demonblade/400/600",
+            backdropUrl = "https://picsum.photos/seed/demonblade-bg/1200/800",
+            imdbRating = 9.1, releaseYear = 2024,
+            genres = listOf("Anime", "Action", "Supernatural"),
+            is4kHdr = true,
+            hlsManifestPath = TEST_STREAM_2
+        ),
+        Title(
+            id = "a3", name = "Attack on Titan: Final", type = TitleType.SERIES,
+            synopsis = "Humanity's last stand reaches its dramatic climax as secrets of the Titans and world history are finally revealed.",
+            posterUrl = "https://picsum.photos/seed/aotfinal/400/600",
+            backdropUrl = "https://picsum.photos/seed/aotfinal-bg/1200/800",
+            imdbRating = 9.2, releaseYear = 2024,
+            genres = listOf("Anime", "Sci-Fi", "Drama"),
+            is4kHdr = true,
+            hlsManifestPath = TEST_STREAM_1
+        ),
+        Title(
+            id = "a4", name = "Jujutsu Cursed Realm", type = TitleType.SERIES,
+            synopsis = "Sorcerers defend Tokyo against deadly cursed spirits threatening to engulf the real world in total chaos.",
+            posterUrl = "https://picsum.photos/seed/jujutsu/400/600",
+            backdropUrl = "https://picsum.photos/seed/jujutsu-bg/1200/800",
+            imdbRating = 8.8, releaseYear = 2025,
+            genres = listOf("Anime", "Fantasy", "Action"),
+            hlsManifestPath = TEST_STREAM_2
+        )
+    )
+
     private val allTitles = listOf(
         Title(
             id = "t1", name = "Dog Man", type = TitleType.SERIES,
@@ -50,6 +92,7 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
             imdbRating = 7.1, releaseYear = 2025,
             genres = listOf("Drama", "Comedy"),
             cast = castPool,
+            is4kHdr = true,
             hlsManifestPath = TEST_STREAM_1,
             episodes = episodesForDogMan
         ),
@@ -98,10 +141,11 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
             backdropUrl = "https://picsum.photos/seed/hotivy-bg/1200/800",
             imdbRating = 7.0, releaseYear = 2024,
             genres = listOf("Crime", "Comedy"),
+            is4kHdr = true,
             hlsManifestPath = TEST_STREAM_2,
             episodes = episodesForDogMan.map { it.copy(id = "hi-${it.id}") }
         )
-    )
+    ) + animeTitles
 
     init {
         progress["t1"] = 20 * 60 to 45 * 60
@@ -109,12 +153,14 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
 
     override fun getHomeRails(): Flow<List<Rail>> = flow {
         delay(200) // simulate network
+        val webSeriesTitles = allTitles.filter { it.type == TitleType.SERIES && !it.genres.contains("Anime") }
         emit(
             listOf(
                 Rail("continue-watching", "Continue Watching", getContinueWatching()),
+                Rail("web-series", "Web Series & TV Shows", webSeriesTitles),
                 Rail("trending", "Trending Now", allTitles),
-                Rail("more-like-this", "More Like This", allTitles.shuffled()),
-                Rail("popular", "Popular on StreamFlow", allTitles.shuffled())
+                Rail("popular", "Popular on StreamFlow", allTitles.shuffled()),
+                Rail("anime-universe", "Anime World", animeTitles)
             )
         )
     }
