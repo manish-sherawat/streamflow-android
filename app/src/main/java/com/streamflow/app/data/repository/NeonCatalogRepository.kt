@@ -44,10 +44,44 @@ private val fallbackTitles = listOf(
     )
 )
 
+private val fallbackAnimeTitles = listOf(
+    Title(
+        id = "a1", name = "Solo Leveling: Arise", type = TitleType.SERIES,
+        synopsis = "In a world where hunters battle monsters, an E-rank hunter gets a secret system allowing him to level up endlessly.",
+        posterUrl = "https://picsum.photos/seed/sololeveling/400/600",
+        backdropUrl = "https://picsum.photos/seed/sololeveling-bg/1200/800",
+        imdbRating = 8.9, releaseYear = 2025,
+        genres = listOf("Anime", "Action", "Fantasy"),
+        is4kHdr = true,
+        hlsManifestPath = TEST_STREAM
+    ),
+    Title(
+        id = "a2", name = "Demon Slayer: Infinity Arc", type = TitleType.SERIES,
+        synopsis = "Tanjiro and the Hashira embark on a perilous battle through the Infinity Castle to eliminate Muzan Kibutsuji.",
+        posterUrl = "https://picsum.photos/seed/demonslayer/400/600",
+        backdropUrl = "https://picsum.photos/seed/demonslayer-bg/1200/800",
+        imdbRating = 9.1, releaseYear = 2024,
+        genres = listOf("Anime", "Action"),
+        is4kHdr = true,
+        hlsManifestPath = TEST_STREAM
+    ),
+    Title(
+        id = "a3", name = "Jujutsu Kaisen: Cursed Clash", type = TitleType.SERIES,
+        synopsis = "Sorcerers battle special grade cursed spirits in the ultimate clash for supremacy.",
+        posterUrl = "https://picsum.photos/seed/jujutsu/400/600",
+        backdropUrl = "https://picsum.photos/seed/jujutsu-bg/1200/800",
+        imdbRating = 8.8, releaseYear = 2024,
+        genres = listOf("Anime", "Action"),
+        is4kHdr = true,
+        hlsManifestPath = TEST_STREAM
+    )
+)
+
 private val fallbackRails = listOf(
     Rail("trending", "Trending Now", fallbackTitles),
     Rail("popular", "Popular Movies & Shows", fallbackTitles.shuffled()),
-    Rail("top-rated", "Top Rated", fallbackTitles)
+    Rail("top-rated", "Top Rated", fallbackTitles),
+    Rail("anime-universe", "Anime World ⚡", fallbackAnimeTitles)
 )
 
 @Singleton
@@ -79,6 +113,12 @@ class NeonCatalogRepository @Inject constructor(
                     )
                 )
             }
+            // Ensure Anime rail is always present
+            val hasAnime = rails.any { it.id.contains("anime", ignoreCase = true) || it.title.contains("anime", ignoreCase = true) }
+            if (!hasAnime) {
+                rails.add(Rail(id = "anime-universe", title = "Anime World ⚡", titles = fallbackAnimeTitles))
+            }
+
             if (rails.isNotEmpty()) {
                 cachedRails = rails
                 // Cache title lookup

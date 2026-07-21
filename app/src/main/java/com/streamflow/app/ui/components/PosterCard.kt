@@ -87,8 +87,13 @@ fun PosterCard(
                 }
             )
     ) {
-        AsyncImage(
-            model = posterUrl,
+        coil.compose.AsyncImage(
+            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                .data(posterUrl)
+                .crossfade(true)
+                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                .build(),
             contentDescription = titleLabel,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()

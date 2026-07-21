@@ -152,15 +152,20 @@ private fun HomeContent(rails: List<Rail>, onTitleClick: (Title) -> Unit) {
         }
 
         // Content Rails (Web Series, Trending, Popular, Anime World at bottom)
-        items(filteredRails, key = { it.id }) { rail ->
+        items(filteredRails, key = { it.id }, contentType = { "rail" }) { rail ->
             Spacer(modifier = Modifier.height(Spacing.lg))
-            when (rail.id) {
-                "anime-universe" -> {
-                    AnimeSection(rail = rail, onTitleClick = onTitleClick)
+            val isAnimeRail = rail.id == "anime-universe" || rail.id.contains("anime", ignoreCase = true) || rail.title.contains("anime", ignoreCase = true)
+            if (isAnimeRail) {
+                AnimeSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = "Anime" })
+            } else {
+                val targetCategory = when {
+                    rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true) -> "Trending"
+                    rail.id == "bollywood" || rail.title.contains("Bollywood", ignoreCase = true) -> "Movies"
+                    rail.id == "hollywood" || rail.title.contains("Hollywood", ignoreCase = true) -> "Movies"
+                    rail.id == "web-series" || rail.title.contains("Series", ignoreCase = true) -> "TV Shows"
+                    else -> "All"
                 }
-                else -> {
-                    RailSection(rail = rail, onTitleClick = onTitleClick)
-                }
+                RailSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = targetCategory })
             }
         }
     }
@@ -639,7 +644,11 @@ private fun FeatureHighlightCard(title: Title, onClick: () -> Unit) {
  * Anime Section (Placed right after Web Series)
  */
 @Composable
-private fun AnimeSection(rail: Rail, onTitleClick: (Title) -> Unit) {
+private fun AnimeSection(
+    rail: Rail,
+    onTitleClick: (Title) -> Unit,
+    onSeeAllClick: () -> Unit = {}
+) {
     Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -669,8 +678,12 @@ private fun AnimeSection(rail: Rail, onTitleClick: (Title) -> Unit) {
             }
             Text(
                 text = "See all",
-                style = StreamFlowType.caption,
-                color = Color(0xFFFF007F)
+                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                color = Color(0xFFFF007F),
+                modifier = Modifier
+                    .clip(Radius.chip)
+                    .clickable { onSeeAllClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
         Spacer(Modifier.height(Spacing.xs))
@@ -678,7 +691,7 @@ private fun AnimeSection(rail: Rail, onTitleClick: (Title) -> Unit) {
             contentPadding = PaddingValues(horizontal = Spacing.md),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            items(rail.titles, key = { "anime_${it.id}" }) { title ->
+            items(rail.titles, key = { "anime_${it.id}" }, contentType = { "poster" }) { title ->
                 PosterCard(
                     posterUrl = title.posterUrl,
                     titleLabel = title.name,
@@ -691,7 +704,11 @@ private fun AnimeSection(rail: Rail, onTitleClick: (Title) -> Unit) {
 }
 
 @Composable
-private fun RailSection(rail: Rail, onTitleClick: (Title) -> Unit) {
+private fun RailSection(
+    rail: Rail,
+    onTitleClick: (Title) -> Unit,
+    onSeeAllClick: () -> Unit = {}
+) {
     val isTrending = rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true)
 
     Column {
@@ -709,8 +726,12 @@ private fun RailSection(rail: Rail, onTitleClick: (Title) -> Unit) {
             )
             Text(
                 text = "See all",
-                style = StreamFlowType.caption,
-                color = TextSecondary
+                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                color = TextSecondary,
+                modifier = Modifier
+                    .clip(Radius.chip)
+                    .clickable { onSeeAllClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
         Spacer(Modifier.height(Spacing.xs))
@@ -718,7 +739,7 @@ private fun RailSection(rail: Rail, onTitleClick: (Title) -> Unit) {
             contentPadding = PaddingValues(horizontal = Spacing.md),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            itemsIndexed(rail.titles, key = { _, title -> title.id }) { index, title ->
+            itemsIndexed(rail.titles, key = { _, title -> title.id }, contentType = { _, _ -> "poster" }) { index, title ->
                 PosterCard(
                     posterUrl = title.posterUrl,
                     titleLabel = title.name,
