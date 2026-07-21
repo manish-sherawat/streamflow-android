@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -103,7 +104,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BgBase)
-            .androidx.compose.ui.input.nestedscroll.nestedScroll(pullToRefreshState.nestedScrollConnection)
+            .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
         when (val state = uiState) {
             is HomeUiState.Loading -> {
@@ -250,22 +251,29 @@ private fun HeroCarousel(
 
         Spacer(modifier = Modifier.height(Spacing.sm))
 
-        // Animated dot indicators
+        // Animated dot indicators with spring width animation
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             repeat(heroTitles.size) { index ->
                 val isSelected = pagerState.currentPage == index
+                val width by androidx.compose.animation.core.animateDpAsState(
+                    targetValue = if (isSelected) 22.dp else 5.dp,
+                    animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.7f, stiffness = 300f),
+                    label = "indicatorWidth_$index"
+                )
+                val alpha by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0.35f,
+                    animationSpec = androidx.compose.animation.core.tween(200),
+                    label = "indicatorAlpha_$index"
+                )
                 Box(
                     modifier = Modifier
                         .height(4.dp)
-                        .width(if (isSelected) 24.dp else 6.dp)
+                        .width(width)
                         .clip(Radius.pill)
-                        .background(
-                            if (isSelected) AccentPrimary
-                            else GlassBorder
-                        )
+                        .background(AccentPrimary.copy(alpha = alpha))
                 )
             }
         }
@@ -346,29 +354,37 @@ private fun CategoryChipsRow(
     onSelect: (String) -> Unit
 ) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+        contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(categories) { cat ->
             val isSelected = cat == selectedCategory
+            val bgColor by androidx.compose.animation.animateColorAsState(
+                targetValue = if (isSelected) AccentPrimary else BgCard,
+                animationSpec = androidx.compose.animation.core.tween(250),
+                label = "chipBg_$cat"
+            )
+            val textColor by androidx.compose.animation.animateColorAsState(
+                targetValue = if (isSelected) Color.White else TextSecondary,
+                animationSpec = androidx.compose.animation.core.tween(250),
+                label = "chipText_$cat"
+            )
             Text(
                 text = cat,
                 style = StreamFlowType.pillLabel.copy(
-                    color = if (isSelected) Color.White else TextSecondary,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 ),
+                color = textColor,
                 modifier = Modifier
-                    .clip(Radius.chip)
-                    .background(
-                        if (isSelected) Brush.horizontalGradient(
-                            listOf(AccentPrimary, Color(0xFF6B21A8))
-                        ) else Brush.linearGradient(
-                            listOf(BgCard, BgCard)
-                        )
+                    .clip(RoundedCornerShape(50))
+                    .background(bgColor)
+                    .border(
+                        width = if (isSelected) 0.dp else 0.5.dp,
+                        color = GlassBorder,
+                        shape = RoundedCornerShape(50)
                     )
-                    .border(0.5.dp, if (isSelected) AccentPrimary.copy(alpha = 0.5f) else GlassBorder, Radius.chip)
                     .clickable { onSelect(cat) }
-                    .padding(horizontal = 14.dp, vertical = 7.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
     }
@@ -771,22 +787,49 @@ private fun RailSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.md, vertical = 0.dp)
+                .padding(horizontal = Spacing.md)
+                .padding(top = Spacing.sm)
         ) {
-            Text(
-                text = if (isTrending) "🔥 TOP 10 TRENDING TODAY" else rail.title,
-                style = StreamFlowType.sectionHeader,
-                color = TextPrimary
-            )
-            Text(
-                text = "See all",
-                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
-                color = TextSecondary,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                // Colored accent bar before rail title
+                Box(
+                    modifier = Modifier
+                        .size(3.dp, 16.dp)
+                        .clip(Radius.pill)
+                        .background(AccentPrimary)
+                )
+                Text(
+                    text = if (isTrending) "🔥 TOP 10 TRENDING" else rail.title.uppercase(),
+                    style = StreamFlowType.sectionHeader.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = TextPrimary
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(Radius.chip)
                     .clickable { onSeeAllClick() }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+            ) {
+                Text(
+                    text = "See all",
+                    style = StreamFlowType.caption.copy(fontWeight = FontWeight.SemiBold),
+                    color = AccentPrimary
+                )
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    tint = AccentPrimary,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
         }
         Spacer(Modifier.height(Spacing.xs))
         LazyRow(

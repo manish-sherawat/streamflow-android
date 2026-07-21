@@ -64,8 +64,8 @@ fun PosterCard(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.96f else 1f,
-        animationSpec = spring(dampingRatio = 0.65f, stiffness = 380f),
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
         label = "posterPressScale"
     )
 
@@ -99,15 +99,16 @@ fun PosterCard(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Minimal bottom gradient scrim
+        // Cinematic bottom gradient scrim
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.55f to Color.Transparent,
-                            1.0f  to Color.Black.copy(alpha = 0.82f)
+                            0.45f to Color.Transparent,
+                            0.78f to Color.Black.copy(alpha = 0.55f),
+                            1.0f  to Color.Black.copy(alpha = 0.92f)
                         )
                     )
                 )

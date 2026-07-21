@@ -1,5 +1,7 @@
 package com.streamflow.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,15 +20,20 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.streamflow.app.ui.theme.AccentGlow
 import com.streamflow.app.ui.theme.AccentPrimary
+import com.streamflow.app.ui.theme.AccentSecondary
 import com.streamflow.app.ui.theme.BgBase
+import com.streamflow.app.ui.theme.BgElevated
 import com.streamflow.app.ui.theme.GlassBorder
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Sizes
@@ -35,8 +42,8 @@ import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 
 /**
- * Primary CTA — solid white pill, black text.
- * Clean and minimal — no gradient, no glow.
+ * Primary CTA — crisp white pill button with deep play icon.
+ * Used for Watch Now, Play Now, primary actions.
  */
 @Composable
 fun PrimaryButton(
@@ -52,12 +59,12 @@ fun PrimaryButton(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .height(Sizes.primaryButtonHeight)
+            .height(46.dp)
             .clip(Radius.pill)
             .background(TextPrimary)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Color.Black.copy(alpha = 0.12f)),
+                indication = rememberRipple(color = Color.Black.copy(alpha = 0.15f)),
                 onClick = onClick
             )
     ) {
@@ -65,21 +72,19 @@ fun PrimaryButton(
             imageVector = icon,
             contentDescription = null,
             tint = BgBase,
-            modifier = Modifier
-                .size(18.dp)
-                .padding(end = 0.dp)
+            modifier = Modifier.size(19.dp)
         )
         Text(
             text = label,
             style = StreamFlowType.buttonLabel,
             color = BgBase,
-            modifier = Modifier.padding(start = 6.dp)
+            modifier = Modifier.padding(start = 5.dp)
         )
     }
 }
 
 /**
- * Secondary action — ghost pill with hairline border, white text.
+ * Secondary action — ghost pill with animated blue border for saved state.
  */
 @Composable
 fun SecondaryButton(
@@ -89,19 +94,41 @@ fun SecondaryButton(
     icon: ImageVector = Icons.Filled.Add
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val isSaved = label.contains("Saved", ignoreCase = true)
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isSaved) AccentPrimary else GlassBorder,
+        animationSpec = tween(300),
+        label = "secondaryBorderColor"
+    )
+    val bgColor by animateColorAsState(
+        targetValue = if (isSaved) AccentGlow else Color.Transparent,
+        animationSpec = tween(300),
+        label = "secondaryBgColor"
+    )
+    val iconTint by animateColorAsState(
+        targetValue = if (isSaved) AccentPrimary else TextPrimary,
+        animationSpec = tween(300),
+        label = "secondaryIconTint"
+    )
+    val labelColor by animateColorAsState(
+        targetValue = if (isSaved) AccentPrimary else TextPrimary,
+        animationSpec = tween(300),
+        label = "secondaryLabelColor"
+    )
 
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .wrapContentWidth()
-            .height(Sizes.secondaryButtonHeight)
+            .height(46.dp)
             .clip(Radius.pill)
-            .background(Color.Transparent)
-            .border(0.5.dp, GlassBorder, Radius.pill)
+            .background(bgColor)
+            .border(1.dp, borderColor, Radius.pill)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = TextSecondary.copy(alpha = 0.15f)),
+                indication = rememberRipple(color = AccentPrimary.copy(alpha = 0.15f)),
                 onClick = onClick
             )
             .padding(horizontal = 20.dp)
@@ -109,20 +136,20 @@ fun SecondaryButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = TextPrimary,
+            tint = iconTint,
             modifier = Modifier.size(16.dp)
         )
         Text(
             text = label,
             style = StreamFlowType.pillLabel,
-            color = TextPrimary,
+            color = labelColor,
             modifier = Modifier.padding(start = 7.dp)
         )
     }
 }
 
 /**
- * Blue accent button — used for highlight CTAs (e.g. Sign In).
+ * Blue accent button — primary branded CTA (e.g. Sign In, Continue).
  */
 @Composable
 fun AccentButton(
@@ -138,9 +165,13 @@ fun AccentButton(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .height(Sizes.primaryButtonHeight)
+            .height(50.dp)
             .clip(Radius.pill)
-            .background(AccentPrimary)
+            .background(
+                Brush.horizontalGradient(
+                    listOf(AccentPrimary, AccentSecondary)
+                )
+            )
             .clickable(
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = Color.White.copy(alpha = 0.2f)),
