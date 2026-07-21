@@ -518,21 +518,7 @@ private fun HeroBanner(
                 GlassPill(label = if (title.type.name == "SERIES") "Web Series" else "Movie")
             }
 
-            Spacer(Modifier.height(8.dp))
-
-            // Synopsis preview string
-            Text(
-                text = title.synopsis,
-                style = StreamFlowType.caption.copy(
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
-                    color = TextSecondary
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(Modifier.height(Spacing.md))
+            Spacer(Modifier.height(Spacing.sm))
 
             // CTA Button Row
             Row(
