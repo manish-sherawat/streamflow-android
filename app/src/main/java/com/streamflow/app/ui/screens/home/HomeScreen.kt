@@ -301,7 +301,7 @@ private fun TopBrandBar() {
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
-                            colors = listOf(AccentPrimary, Color(0xFF8A2BE2))
+                            colors = listOf(AccentPrimary, Color(0xFFFF3B30))
                         )
                     ),
                 contentAlignment = Alignment.Center
@@ -329,8 +329,8 @@ private fun TopBrandBar() {
             Box(
                 modifier = Modifier
                     .clip(Radius.chip)
-                    .background(Color(0xFF1E1C28))
-                    .border(1.dp, Brush.horizontalGradient(listOf(AccentStar, Color(0xFFFF8C00))), Radius.chip)
+                    .background(Color(0xFF1C1C1C))
+                    .border(1.dp, Brush.horizontalGradient(listOf(AccentStar, Color(0xFFFF9500))), Radius.chip)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
@@ -721,7 +721,7 @@ private fun AnimeSection(
                     modifier = Modifier
                         .size(6.dp, 16.dp)
                         .clip(Radius.pill)
-                        .background(Color(0xFFFF007F)) // Anime Vibrant Pink/Magenta
+                        .background(AccentStar) // Electric Golden Yellow
                 )
                 Text(
                     text = "ANIME WORLD ⚡",
@@ -735,7 +735,7 @@ private fun AnimeSection(
             Text(
                 text = "See all",
                 style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
-                color = Color(0xFFFF007F),
+                color = AccentStar,
                 modifier = Modifier
                     .clip(Radius.chip)
                     .clickable { onSeeAllClick() }

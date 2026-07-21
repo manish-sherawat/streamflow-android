@@ -2,43 +2,43 @@ package com.streamflow.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─── StreamFlow Premium Dark Palette ────────────────────────────────────────
-// Philosophy: Near-black base, single electric-blue accent, micro-depth surfaces.
-// Depth through layered surface elevation, not color saturation.
+// ─── StreamFlow High-Contrast Palette (Black, Red, Yellow, White) ─────────────
+// Philosophy: True deep black background, cinematic red accent, golden yellow ratings/badges, crisp white text.
+// 0% purple or blue tints.
 
-// Backgrounds — layered depth system
-val BgBase      = Color(0xFF080810)   // Deep true-black with subtle blue tint
-val BgCard      = Color(0xFF13131F)   // Card surface — elevated from base
-val BgElevated  = Color(0xFF1A1A2A)   // Elevated sheets / bottom sheets / dialogs
-val BgSurface   = Color(0xFF1F1F30)   // Mid-level surface (section headers, chips)
-val BgInput     = Color(0xFF14141E)   // Input field fill
+// Backgrounds — pure dark layers
+val BgBase      = Color(0xFF0A0A0A)   // Pure deep pitch black
+val BgCard      = Color(0xFF141414)   // Card surface
+val BgElevated  = Color(0xFF1E1E1E)   // Elevated sheets / bottom nav / dialogs
+val BgSurface   = Color(0xFF222222)   // Mid-level surface (chips, headers)
+val BgInput     = Color(0xFF181818)   // Input field fill
 
 // kept for compat
 val BgGradientTop = BgBase
 
-// Text hierarchy — crisp & legible
-val TextPrimary   = Color(0xFFF2F2FF) // Near-white with blue tint
-val TextSecondary = Color(0xFF7E7E9A) // Mid-tone muted blue-gray
-val TextTertiary  = Color(0xFF45455A) // Disabled / hint text
-val TextMuted     = Color(0xFF3A3A50) // Inactive icons
+// Text hierarchy — pure high contrast
+val TextPrimary   = Color(0xFFFFFFFF) // Crisp pure white
+val TextSecondary = Color(0xFFA0A0A0) // Clean light gray
+val TextTertiary  = Color(0xFF666666) // Muted hint text
+val TextMuted     = Color(0xFF444444) // Inactive icon gray
 
-// Accent system — single electric indigo-blue
-val AccentPrimary   = Color(0xFF6C8EF5) // Refined electric blue-indigo
-val AccentSecondary = Color(0xFF8BAAFF) // Lighter accent (hover/secondary states)
-val AccentFocus     = Color(0xFF6C8EF5) // compat alias
-val AccentMagenta   = Color(0xFF6C8EF5) // compat alias → blue
-val AccentStar      = Color(0xFFFFCC30) // Warm amber — rating stars only
-val AccentCream     = Color(0xFFF2F2FF) // compat alias → TextPrimary
-val AccentGlow      = Color(0x336C8EF5) // Transparent glow for accented elements
+// Accent system — Cinematic Red & Golden Yellow
+val AccentPrimary   = Color(0xFFE50914) // Vibrant cinematic red
+val AccentSecondary = Color(0xFFFF3B30) // Bright secondary red
+val AccentFocus     = Color(0xFFE50914) // compat alias
+val AccentMagenta   = Color(0xFFE50914) // compat alias → red
+val AccentStar      = Color(0xFFFFCC00) // Electric golden yellow — ratings & badges
+val AccentCream     = Color(0xFFFFFFFF) // compat alias → TextPrimary
+val AccentGlow      = Color(0x33E50914) // Transparent red glow
 
-// Dividers & borders — ultra-subtle
-val Divider        = Color(0xFF1E1E2E)  // Hairline separator
-val GlassBorder    = Color(0xFF2C2C42)  // Subtle card outline with blue tint
-val GlassHighlight = Color(0xFF2C2C42)  // compat alias
+// Dividers & borders — subtle dark gray
+val Divider        = Color(0xFF222222)  // Hairline separator
+val GlassBorder    = Color(0xFF2A2A2A)  // Subtle card outline
+val GlassHighlight = Color(0xFF2A2A2A)  // compat alias
 
 // Chip / Pill surfaces
-val PillBg     = Color(0xFF1E1E30)     // Filled dark chip background
-val PillBorder = Color(0xFF2C2C42)     // Chip border
+val PillBg     = Color(0xFF1F1F1F)     // Filled dark chip background
+val PillBorder = Color(0xFF2A2A2A)     // Chip border
 
 // Glass fill (kept for compat)
-val GlassFill = Color(0xCC13131F.toInt()) // 80% opaque card bg, for compat
+val GlassFill = Color(0xCC141414.toInt()) // 80% opaque card bg
