@@ -397,7 +397,7 @@ private fun DetailContent(
 private fun Backdrop(title: Title, onBack: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
         AsyncImage(
-            model = title.backdropUrl,
+            model = title.posterUrl,
             contentDescription = title.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()

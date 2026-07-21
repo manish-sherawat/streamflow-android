@@ -405,9 +405,9 @@ private fun HeroBanner(
             .clip(RoundedCornerShape(20.dp))
             .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
     ) {
-        // Backdrop Image
+        // Poster Image (uses posterUrl for consistent branding)
         AsyncImage(
-            model = title.backdropUrl,
+            model = title.posterUrl,
             contentDescription = title.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
@@ -618,7 +618,7 @@ private fun FeatureHighlightCard(title: Title, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         AsyncImage(
-            model = title.backdropUrl,
+            model = title.posterUrl,
             contentDescription = title.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
