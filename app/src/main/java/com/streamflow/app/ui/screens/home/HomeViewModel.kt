@@ -26,8 +26,53 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val _watchlistIds = MutableStateFlow<Set<String>>(emptySet())
+    val watchlistIds: StateFlow<Set<String>> = _watchlistIds.asStateFlow()
+
     init {
         loadHome()
+        refreshWatchlist()
+    }
+
+    fun refreshWatchlist() {
+        viewModelScope.launch {
+            val list = repository.getWatchlist()
+            _watchlistIds.value = list.map { it.id }.toSet()
+        }
+    }
+
+    fun toggleWatchlist(titleId: String) {
+        viewModelScope.launch {
+            val current = _watchlistIds.value
+            if (current.contains(titleId)) {
+                repository.removeFromWatchlist(titleId)
+                _watchlistIds.value = current - titleId
+            } else {
+                repository.addToWatchlist(titleId)
+                _watchlistIds.value = current + titleId
+            }
+        }
+    }
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refreshHome() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                repository.getHomeRails()
+                    .catch { }
+                    .collect { rails ->
+                        _uiState.value = HomeUiState.Success(rails.filter { it.titles.isNotEmpty() })
+                    }
+                refreshWatchlist()
+            } catch (e: Exception) {
+                // Keep existing state
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 
     fun loadHome() {

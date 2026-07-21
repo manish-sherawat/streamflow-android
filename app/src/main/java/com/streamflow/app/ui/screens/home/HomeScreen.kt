@@ -75,14 +75,36 @@ import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 import com.streamflow.app.ui.theme.TextMuted
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onTitleClick: (Title) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val watchlistIds by viewModel.watchlistIds.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(BgBase)) {
+    val pullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refreshHome()
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing) {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BgBase)
+            .androidx.compose.ui.input.nestedscroll.nestedScroll(pullToRefreshState.nestedScrollConnection)
+    ) {
         when (val state = uiState) {
             is HomeUiState.Loading -> {
                 Column(modifier = Modifier.statusBarsPadding().padding(top = 16.dp)) {
@@ -102,14 +124,31 @@ fun HomeScreen(
                 )
             }
             is HomeUiState.Success -> {
-                HomeContent(rails = state.rails, onTitleClick = onTitleClick)
+                HomeContent(
+                    rails = state.rails,
+                    watchlistIds = watchlistIds,
+                    onTitleClick = onTitleClick,
+                    onToggleWatchlist = viewModel::toggleWatchlist
+                )
             }
         }
+
+        androidx.compose.material3.pulltorefresh.PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter),
+            containerColor = BgCard,
+            contentColor = AccentPrimary
+        )
     }
 }
 
 @Composable
-private fun HomeContent(rails: List<Rail>, onTitleClick: (Title) -> Unit) {
+private fun HomeContent(
+    rails: List<Rail>,
+    watchlistIds: Set<String>,
+    onTitleClick: (Title) -> Unit,
+    onToggleWatchlist: (String) -> Unit
+) {
     val heroTitles = remember(rails) {
         rails.flatMap { it.titles }.distinctBy { it.id }.take(5)
     }
@@ -147,7 +186,12 @@ private fun HomeContent(rails: List<Rail>, onTitleClick: (Title) -> Unit) {
         if (heroTitles.isNotEmpty() && selectedCategory == "All") {
             item {
                 Spacer(modifier = Modifier.height(Spacing.xs))
-                HeroCarousel(heroTitles = heroTitles, onTitleClick = onTitleClick)
+                HeroCarousel(
+                    heroTitles = heroTitles,
+                    watchlistIds = watchlistIds,
+                    onTitleClick = onTitleClick,
+                    onToggleWatchlist = onToggleWatchlist
+                )
             }
         }
 
@@ -175,7 +219,9 @@ private fun HomeContent(rails: List<Rail>, onTitleClick: (Title) -> Unit) {
 @Composable
 private fun HeroCarousel(
     heroTitles: List<Title>,
-    onTitleClick: (Title) -> Unit
+    watchlistIds: Set<String>,
+    onTitleClick: (Title) -> Unit,
+    onToggleWatchlist: (String) -> Unit
 ) {
     if (heroTitles.isEmpty()) return
 
@@ -194,7 +240,12 @@ private fun HeroCarousel(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth()) { page ->
             val title = heroTitles[page]
-            HeroBanner(title = title, onClick = { onTitleClick(title) })
+            HeroBanner(
+                title = title,
+                isBookmarked = watchlistIds.contains(title.id),
+                onClick = { onTitleClick(title) },
+                onToggleWatchlist = { onToggleWatchlist(title.id) }
+            )
         }
 
         Spacer(modifier = Modifier.height(Spacing.sm))
@@ -324,9 +375,12 @@ private fun CategoryChipsRow(
 }
 
 @Composable
-private fun HeroBanner(title: Title, onClick: () -> Unit) {
-    var isBookmarked by remember { mutableStateOf(false) }
-
+private fun HeroBanner(
+    title: Title,
+    isBookmarked: Boolean,
+    onClick: () -> Unit,
+    onToggleWatchlist: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -476,9 +530,9 @@ private fun HeroBanner(title: Title, onClick: () -> Unit) {
                     modifier = Modifier.weight(1.2f)
                 )
                 SecondaryButton(
-                    label = if (isBookmarked) "Saved" else "My List",
+                    label = if (isBookmarked) "✓ Saved" else "+ My List",
                     icon = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                    onClick = { isBookmarked = !isBookmarked },
+                    onClick = onToggleWatchlist,
                     modifier = Modifier.weight(0.8f)
                 )
             }

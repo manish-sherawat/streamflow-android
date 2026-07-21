@@ -189,7 +189,10 @@ class NeonCatalogRepository @Inject constructor(
         return cachedRails?.find { it.id == "continue-watching" }?.titles ?: emptyList()
     }
 
+    private val watchlistTitleIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     override suspend fun addToWatchlist(titleId: String) {
+        watchlistTitleIds.add(titleId)
         try {
             apiService.syncWatchlist(WatchlistRequestDto(titleId = titleId, action = "add"))
         } catch (e: Exception) {
@@ -198,6 +201,7 @@ class NeonCatalogRepository @Inject constructor(
     }
 
     override suspend fun removeFromWatchlist(titleId: String) {
+        watchlistTitleIds.remove(titleId)
         try {
             apiService.syncWatchlist(WatchlistRequestDto(titleId = titleId, action = "remove"))
         } catch (e: Exception) {
@@ -206,12 +210,20 @@ class NeonCatalogRepository @Inject constructor(
     }
 
     override suspend fun getWatchlist(): List<Title> {
-        return try {
+        val localTitles = watchlistTitleIds.mapNotNull { getTitle(it) }.toMutableList()
+        try {
             val dtos = apiService.getUserWatchlist()
-            dtos.map { it.toDomain() }
+            val remoteTitles = dtos.map { it.toDomain() }
+            remoteTitles.forEach { t ->
+                watchlistTitleIds.add(t.id)
+                if (localTitles.none { it.id == t.id }) {
+                    localTitles.add(t)
+                }
+            }
         } catch (e: Exception) {
-            emptyList()
+            // Ignored
         }
+        return localTitles
     }
 
     override suspend fun updateProgress(titleId: String, episodeId: String?, positionSec: Int, durationSec: Int) {
