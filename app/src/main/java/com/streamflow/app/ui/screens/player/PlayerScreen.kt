@@ -27,15 +27,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SignalWifiOff
 import androidx.compose.material.icons.filled.SkipNext
+import com.streamflow.app.ui.components.PrimaryButton
+import com.streamflow.app.ui.theme.BgElevated
+import com.streamflow.app.ui.theme.GlassBorder
+import com.streamflow.app.ui.theme.TextPrimary
+import com.streamflow.app.ui.theme.TextSecondary
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -98,6 +107,19 @@ fun PlayerScreen(
     var countdownSeconds by remember { mutableStateOf(5) }
     val nextEp = uiState.nextEpisode
 
+    var resizeMode by remember { mutableStateOf(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT) }
+    var resizeModeLabel by remember { mutableStateOf("Fit (16:9)") }
+
+    var isControlsOverlayVisible by remember { mutableStateOf(true) }
+    var lastUserInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(lastUserInteractionTime, isControlsOverlayVisible) {
+        if (isControlsOverlayVisible) {
+            delay(3500)
+            isControlsOverlayVisible = false
+        }
+    }
+
     LaunchedEffect(uiState.isNextEpisodeCountdownActive) {
         if (uiState.isNextEpisodeCountdownActive && nextEp != null) {
             countdownSeconds = 5
@@ -157,10 +179,12 @@ fun PlayerScreen(
             audioTracks = uiState.audioTracks,
             subtitleTracks = uiState.subtitleTracks,
             videoQualities = uiState.availableVideoQualities,
+            subtitleStyle = uiState.subtitleStyle,
             onSelectSpeed = viewModel::setPlaybackSpeed,
             onSelectAudioTrack = viewModel::setAudioTrack,
             onSelectSubtitleTrack = viewModel::setSubtitleTrack,
             onSelectVideoQuality = viewModel::setVideoQuality,
+            onUpdateSubtitleStyle = viewModel::setSubtitleStyle,
             onDismiss = { showControlsSheet = false }
         )
     }
@@ -172,7 +196,12 @@ fun PlayerScreen(
             .pointerInput(isTouchLocked) {
                 if (!isTouchLocked) {
                     detectTapGestures(
+                        onTap = {
+                            isControlsOverlayVisible = !isControlsOverlayVisible
+                            lastUserInteractionTime = System.currentTimeMillis()
+                        },
                         onDoubleTap = { offset ->
+                            lastUserInteractionTime = System.currentTimeMillis()
                             val screenWidth = size.width
                             if (offset.x < screenWidth / 2) {
                                 val newPos = (viewModel.player.currentPosition - 10_000).coerceAtLeast(0)
@@ -195,6 +224,7 @@ fun PlayerScreen(
                     detectDragGestures(
                         onDrag = { change, dragAmount ->
                             change.consume()
+                            lastUserInteractionTime = System.currentTimeMillis()
                             val screenWidth = size.width
                             val isLeftHalf = change.position.x < screenWidth / 2
                             val deltaY = dragAmount.y
@@ -228,15 +258,45 @@ fun PlayerScreen(
             }
     ) {
         AndroidView(
-            factory = { context ->
-                PlayerView(context).apply {
+            factory = { ctx ->
+                PlayerView(ctx).apply {
                     player = viewModel.player
                     useController = !isTouchLocked
+                    this.resizeMode = resizeMode
                     findViewById<android.view.View>(androidx.media3.ui.R.id.exo_settings)?.visibility = android.view.View.GONE
+                    subtitleView?.apply {
+                        val style = uiState.subtitleStyle
+                        setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, style.fontSizeSp.toFloat())
+                        setStyle(
+                            androidx.media3.ui.CaptionStyleCompat(
+                                style.textColorArgb.toInt(),
+                                style.backgroundColorArgb.toInt(),
+                                android.graphics.Color.TRANSPARENT,
+                                androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
+                                android.graphics.Color.BLACK,
+                                null
+                            )
+                        )
+                    }
                 }
             },
             update = { view ->
                 view.useController = !isTouchLocked
+                view.resizeMode = resizeMode
+                view.subtitleView?.apply {
+                    val style = uiState.subtitleStyle
+                    setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, style.fontSizeSp.toFloat())
+                    setStyle(
+                        androidx.media3.ui.CaptionStyleCompat(
+                            style.textColorArgb.toInt(),
+                            style.backgroundColorArgb.toInt(),
+                            android.graphics.Color.TRANSPARENT,
+                            androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
+                            android.graphics.Color.BLACK,
+                            null
+                        )
+                    )
+                }
             },
             modifier = Modifier.fillMaxSize()
         )
@@ -463,56 +523,159 @@ fun PlayerScreen(
         }
 
         uiState.errorMessage?.let { message ->
-            Text(
-                text = "Playback error: $message",
-                style = StreamFlowType.body,
-                modifier = Modifier.align(Alignment.Center).padding(24.dp)
-            )
-        }
-
-        // Top bar overlays — Back, Touch Lock, & Settings
-        if (!isTouchLocked) {
-            Row(
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                        .clickable(onClick = onBack),
-                    contentAlignment = Alignment.Center
+                        .padding(24.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(BgElevated)
+                        .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
+                        .padding(24.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(
+                        Icons.Filled.SignalWifiOff,
+                        contentDescription = null,
+                        tint = Color(0xFFFF3B30),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "Playback Error",
+                        style = StreamFlowType.sheetHeader.copy(fontWeight = FontWeight.Bold),
+                        color = TextPrimary
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = message,
+                        style = StreamFlowType.body,
+                        color = TextSecondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    PrimaryButton(
+                        label = "Retry Connection",
+                        icon = Icons.Filled.Refresh,
+                        onClick = { viewModel.retryPlayback() }
+                    )
                 }
             }
+        }
 
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
+        // Top bar overlays — Back, Aspect Ratio, PiP, Touch Lock, & Settings
+        val isInPipMode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            context.findActivity()?.isInPictureInPictureMode == true
+        } else false
+
+        AnimatedVisibility(
+            visible = !isTouchLocked && !isInPipMode && isControlsOverlayVisible,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Row(
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                        .clickable { isTouchLocked = true },
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.TopStart)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Filled.LockOpen, contentDescription = "Lock Touch Screen", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .clickable(onClick = onBack),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
                 }
-                Spacer(Modifier.size(8.dp))
-                Box(
+
+                Row(
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                        .clickable { showControlsSheet = true },
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                lastUserInteractionTime = System.currentTimeMillis()
+                                when (resizeMode) {
+                                    androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT -> {
+                                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                        resizeModeLabel = "Crop to Fill"
+                                    }
+                                    androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> {
+                                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                        resizeModeLabel = "Stretch"
+                                    }
+                                    else -> {
+                                        resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        resizeModeLabel = "Fit (16:9)"
+                                    }
+                                }
+                                gestureToastText = "Aspect Ratio: $resizeModeLabel"
+                                isBrightnessToast = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.AspectRatio, contentDescription = "Aspect Ratio", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                lastUserInteractionTime = System.currentTimeMillis()
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                    try {
+                                        val activity = context.findActivity()
+                                        val builder = android.app.PictureInPictureParams.Builder()
+                                            .setAspectRatio(android.util.Rational(16, 9))
+                                        activity?.enterPictureInPictureMode(builder.build())
+                                    } catch (e: Exception) {
+                                        // Ignore if PiP not supported
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.PictureInPictureAlt, contentDescription = "Picture-in-Picture Mode", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                lastUserInteractionTime = System.currentTimeMillis()
+                                isTouchLocked = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.LockOpen, contentDescription = "Lock Touch Screen", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                lastUserInteractionTime = System.currentTimeMillis()
+                                showControlsSheet = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
+                    }
                 }
             }
         }

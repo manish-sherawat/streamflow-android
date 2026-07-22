@@ -61,10 +61,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
+                val continueWatching = runCatching { repository.getContinueWatching() }.getOrDefault(emptyList())
                 repository.getHomeRails()
                     .catch { }
                     .collect { rails ->
-                        _uiState.value = HomeUiState.Success(rails.filter { it.titles.isNotEmpty() })
+                        val combinedRails = mutableListOf<Rail>()
+                        if (continueWatching.isNotEmpty()) {
+                            combinedRails.add(Rail(id = "continue-watching", title = "CONTINUE WATCHING", titles = continueWatching))
+                        }
+                        combinedRails.addAll(rails.filter { it.titles.isNotEmpty() })
+                        _uiState.value = HomeUiState.Success(combinedRails)
                     }
                 refreshWatchlist()
             } catch (e: Exception) {
@@ -79,12 +85,18 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = HomeUiState.Loading
             try {
+                val continueWatching = runCatching { repository.getContinueWatching() }.getOrDefault(emptyList())
                 repository.getHomeRails()
                     .catch { e ->
                         _uiState.value = HomeUiState.Error(e.localizedMessage ?: "Failed to load content")
                     }
                     .collect { rails ->
-                        _uiState.value = HomeUiState.Success(rails.filter { it.titles.isNotEmpty() })
+                        val combinedRails = mutableListOf<Rail>()
+                        if (continueWatching.isNotEmpty()) {
+                            combinedRails.add(Rail(id = "continue-watching", title = "CONTINUE WATCHING", titles = continueWatching))
+                        }
+                        combinedRails.addAll(rails.filter { it.titles.isNotEmpty() })
+                        _uiState.value = HomeUiState.Success(combinedRails)
                     }
             } catch (e: Exception) {
                 _uiState.value = HomeUiState.Error(e.localizedMessage ?: "Something went wrong")

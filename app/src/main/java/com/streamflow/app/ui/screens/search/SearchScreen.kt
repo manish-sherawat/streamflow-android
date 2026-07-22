@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.streamflow.app.data.model.Title
 import com.streamflow.app.ui.components.PosterCard
+import com.streamflow.app.ui.components.SearchFilterSheet
 import com.streamflow.app.ui.components.StreamFlowSpinner
 import com.streamflow.app.ui.theme.AccentPrimary
 import com.streamflow.app.ui.theme.BgBase
@@ -67,6 +69,15 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showFilterSheet by remember { mutableStateOf(false) }
+
+    if (showFilterSheet) {
+        SearchFilterSheet(
+            currentFilter = uiState.filter,
+            onApplyFilter = viewModel::setFilter,
+            onDismiss = { showFilterSheet = false }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -80,13 +91,39 @@ fun SearchScreen(
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.md)
                 .padding(top = Spacing.sm, bottom = Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "Search",
                 style = StreamFlowType.displayTitle,
                 color = TextPrimary
             )
+
+            // Filter trigger button
+            Box(
+                modifier = Modifier
+                    .clip(Radius.chip)
+                    .background(BgCard)
+                    .border(0.5.dp, GlassBorder, Radius.chip)
+                    .clickable { showFilterSheet = true }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.FilterList,
+                        contentDescription = "Filters",
+                        tint = AccentPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Filter",
+                        style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                        color = TextPrimary
+                    )
+                }
+            }
         }
 
         // ── Search Bar ───────────────────────────────────────────────────────

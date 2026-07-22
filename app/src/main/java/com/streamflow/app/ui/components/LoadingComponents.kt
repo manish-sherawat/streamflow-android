@@ -166,8 +166,8 @@ fun HeroShimmerSkeleton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(380.dp)
-            .padding(horizontal = Spacing.md)
+            .height(460.dp)
+            .padding(horizontal = Spacing.lg)
             .clip(Radius.card)
     ) {
         ShimmerBox(

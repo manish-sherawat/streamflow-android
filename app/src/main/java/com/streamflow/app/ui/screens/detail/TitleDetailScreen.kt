@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
@@ -252,6 +253,14 @@ private fun DetailContent(
                     if (list.isNotEmpty()) list else title.episodes
                 }
 
+                val nextUpEpisodeId = remember(filteredEpisodes) {
+                    filteredEpisodes.firstOrNull { it.progressFraction > 0f && it.progressFraction < 0.95f }?.id
+                        ?: filteredEpisodes.firstOrNull { it.progressFraction == 0f }?.id
+                        ?: filteredEpisodes.firstOrNull()?.id
+                }
+
+                val isAnime = title.genres.any { it.contains("Anime", ignoreCase = true) }
+
                 Column {
                     Row(
                         modifier = Modifier
@@ -261,7 +270,7 @@ private fun DetailContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Episodes (${filteredEpisodes.size})",
+                            text = if (isAnime) "Episodes & Arcs (${filteredEpisodes.size})" else "Episodes (${filteredEpisodes.size})",
                             style = StreamFlowType.sectionHeader,
                             color = TextPrimary
                         )
@@ -271,8 +280,9 @@ private fun DetailContent(
                             modifier = Modifier
                                 .clip(Radius.chip)
                                 .background(BgCard)
+                                .border(1.dp, GlassBorder, Radius.chip)
                                 .clickable { isListView = !isListView }
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = if (isListView) " Grid View" else " List View",
@@ -282,15 +292,19 @@ private fun DetailContent(
                         }
                     }
 
-                    // Season Chips Selector
+                    // Season / Arc Chips Selector
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
                     ) {
-                        items(availableSeasons) { season ->
-                            val isSelected = season == selectedSeason
+                        items(availableSeasons) { seasonStr ->
+                            val isSelected = seasonStr == selectedSeason
+                            val seasonNum = seasonStr.replace("Season ", "").toIntOrNull() ?: 1
+                            val epCount = title.episodes.count { it.seasonNumber == seasonNum }
+                            val label = if (isAnime) "Arc $seasonNum ($epCount)" else "$seasonStr ($epCount)"
+
                             Text(
-                                text = season,
+                                text = label,
                                 style = StreamFlowType.pillLabel.copy(
                                     color = if (isSelected) Color.White else TextSecondary,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
@@ -298,8 +312,9 @@ private fun DetailContent(
                                 modifier = Modifier
                                     .clip(Radius.chip)
                                     .background(if (isSelected) AccentPrimary else BgCard)
-                                    .clickable { selectedSeason = season }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .border(1.dp, if (isSelected) AccentPrimary else GlassBorder, Radius.chip)
+                                    .clickable { selectedSeason = seasonStr }
+                                    .padding(horizontal = 14.dp, vertical = 7.dp)
                             )
                         }
                     }
@@ -309,28 +324,43 @@ private fun DetailContent(
                     if (!isListView) {
                         LazyRow(
                             contentPadding = PaddingValues(horizontal = Spacing.md),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                         ) {
                             items(filteredEpisodes, key = { it.id }) { ep: Episode ->
-                                EpisodeCard(episode = ep, onClick = { onPlay(title.id, ep.id) })
+                                EpisodeCard(
+                                    episode = ep,
+                                    isNextUp = (ep.id == nextUpEpisodeId),
+                                    onClick = { onPlay(title.id, ep.id) }
+                                )
                             }
                         }
                     } else {
                         Column(
                             modifier = Modifier.padding(horizontal = Spacing.md),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                         ) {
                             filteredEpisodes.forEach { ep ->
+                                val isNextUp = (ep.id == nextUpEpisodeId)
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(Radius.card)
                                         .background(BgCard)
+                                        .border(
+                                            width = if (isNextUp) 1.5.dp else 1.dp,
+                                            color = if (isNextUp) AccentPrimary else GlassBorder,
+                                            shape = Radius.card
+                                        )
                                         .clickable { onPlay(title.id, ep.id) }
-                                        .padding(10.dp),
+                                        .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(modifier = Modifier.size(80.dp, 48.dp).clip(Radius.chip)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(96.dp, 58.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFF14171E))
+                                    ) {
                                         AsyncImage(
                                             model = ep.thumbUrl,
                                             contentDescription = ep.title,
@@ -340,24 +370,62 @@ private fun DetailContent(
                                         Box(
                                             modifier = Modifier
                                                 .align(Alignment.Center)
-                                                .size(24.dp)
+                                                .size(28.dp)
                                                 .clip(CircleShape)
-                                                .background(Color.Black.copy(alpha = 0.6f)),
+                                                .background(Color.Black.copy(alpha = 0.6f))
+                                                .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.PlayArrow,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+
+                                        if (ep.progressFraction > 0f) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomStart)
+                                                    .fillMaxWidth()
+                                                    .height(3.dp)
+                                                    .background(Color.Black.copy(alpha = 0.5f))
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth(ep.progressFraction)
+                                                        .height(3.dp)
+                                                        .background(AccentPrimary)
+                                                )
+                                            }
                                         }
                                     }
                                     Spacer(Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            if (isNextUp) {
+                                                Text(
+                                                    text = "NEXT UP • ",
+                                                    style = StreamFlowType.caption.copy(
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = AccentPrimary
+                                                    )
+                                                )
+                                            }
+                                            Text(
+                                                text = "E${ep.episodeNumber}. ${ep.title}",
+                                                style = StreamFlowType.body.copy(fontWeight = FontWeight.Bold),
+                                                color = TextPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        Spacer(Modifier.height(2.dp))
                                         Text(
-                                            text = "E${ep.episodeNumber}. ${ep.title}",
-                                            style = StreamFlowType.body.copy(fontWeight = FontWeight.Bold),
-                                            color = TextPrimary
-                                        )
-                                        Text(
-                                            text = "${ep.durationSec / 60} mins • S${ep.seasonNumber}",
-                                            style = StreamFlowType.caption,
+                                            text = "${(ep.durationSec / 60).takeIf { it > 0 } ?: 24} mins • Season ${ep.seasonNumber}",
+                                            style = StreamFlowType.caption.copy(fontSize = 11.sp),
                                             color = TextSecondary
                                         )
                                     }
@@ -395,36 +463,37 @@ private fun DetailContent(
 
 @Composable
 private fun Backdrop(title: Title, onBack: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().height(340.dp)) {
         AsyncImage(
             model = title.posterUrl,
             contentDescription = title.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        // Clean bottom-to-black gradient
+        // Clean status bar top safe space gradient + bottom-to-black gradient
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.0f  to Color.Black.copy(alpha = 0.3f),
-                            0.55f to Color.Transparent,
+                            0.0f  to Color.Black.copy(alpha = 0.5f),
+                            0.20f to Color.Transparent,
+                            0.65f to Color.Transparent,
                             1.0f  to BgBase
                         )
                     )
                 )
         )
 
-        // Back button — clean circle on scrim with status bars safe space
+        // Back button with status bars safe space
         Box(
             modifier = Modifier
                 .statusBarsPadding()
-                .padding(Spacing.md)
+                .padding(top = Spacing.md, start = Spacing.md)
                 .size(38.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.55f))
+                .background(Color.Black.copy(alpha = 0.6f))
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center
         ) {

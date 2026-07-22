@@ -44,6 +44,12 @@ data class VideoQualityOption(
     val isSelected: Boolean = false
 )
 
+data class SubtitleStyleConfig(
+    val fontSizeSp: Int = 18,
+    val textColorArgb: Long = 0xFFFFFFFF,
+    val backgroundColorArgb: Long = 0x80000000
+)
+
 data class PlayerUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
@@ -51,6 +57,7 @@ data class PlayerUiState(
     val audioTracks: List<TrackOption> = emptyList(),
     val subtitleTracks: List<TrackOption> = emptyList(),
     val availableVideoQualities: List<VideoQualityOption> = emptyList(),
+    val subtitleStyle: SubtitleStyleConfig = SubtitleStyleConfig(),
     val nextEpisode: com.streamflow.app.data.model.Episode? = null,
     val isNextEpisodeCountdownActive: Boolean = false
 )
@@ -71,8 +78,14 @@ class PlayerViewModel @Inject constructor(
 
     private val trackSelector = DefaultTrackSelector(application)
 
+    private val audioAttributes = androidx.media3.common.AudioAttributes.Builder()
+        .setUsage(C.USAGE_MEDIA)
+        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+        .build()
+
     val player: ExoPlayer = ExoPlayer.Builder(application)
         .setTrackSelector(trackSelector)
+        .setAudioAttributes(audioAttributes, true)
         .setLoadControl(
             DefaultLoadControl.Builder()
                 .setBufferDurationsMs(15_000, 50_000, 2_500, 5_000)
@@ -415,6 +428,15 @@ class PlayerViewModel @Inject constructor(
                 it.copy(isSelected = (it.id == option.id))
             }
         )
+    }
+
+    fun setSubtitleStyle(style: SubtitleStyleConfig) {
+        _uiState.value = _uiState.value.copy(subtitleStyle = style)
+    }
+
+    fun retryPlayback() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+        loadStream()
     }
 
     fun syncProgress() {

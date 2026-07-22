@@ -158,11 +158,16 @@ private fun HomeContent(
     val categories = listOf("All", "Movies", "TV Shows", "Web Series", "Anime", "Trending")
 
     val filteredRails = remember(selectedCategory, rails) {
-        if (selectedCategory == "All") rails
-        else rails.filter { rail ->
+        val activeRails = rails.filterNot {
+            it.id == "featured" ||
+                    it.title.contains("Featured Highlights", ignoreCase = true) ||
+                    it.title.contains("Feature Highlights", ignoreCase = true)
+        }
+        if (selectedCategory == "All") activeRails
+        else activeRails.filter { rail ->
             rail.title.contains(selectedCategory, ignoreCase = true) ||
                     rail.titles.any { t -> t.genres.any { g -> g.contains(selectedCategory, ignoreCase = true) } }
-        }.ifEmpty { rails }
+        }.ifEmpty { activeRails }
     }
 
     LazyColumn(
@@ -196,21 +201,25 @@ private fun HomeContent(
             }
         }
 
-        // Content Rails (Web Series, Trending, Popular, Anime World at bottom)
+        // Content Rails (Continue Watching, Web Series, Trending, Popular, Anime World at bottom)
         items(filteredRails, key = { it.id }, contentType = { "rail" }) { rail ->
             Spacer(modifier = Modifier.height(Spacing.lg))
-            val isAnimeRail = rail.id == "anime-universe" || rail.id.contains("anime", ignoreCase = true) || rail.title.contains("anime", ignoreCase = true)
-            if (isAnimeRail) {
-                AnimeSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = "Anime" })
+            if (rail.id == "continue-watching") {
+                ContinueWatchingSection(rail = rail, onTitleClick = onTitleClick)
             } else {
-                val targetCategory = when {
-                    rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true) -> "Trending"
-                    rail.id == "bollywood" || rail.title.contains("Bollywood", ignoreCase = true) -> "Movies"
-                    rail.id == "hollywood" || rail.title.contains("Hollywood", ignoreCase = true) -> "Movies"
-                    rail.id == "web-series" || rail.title.contains("Series", ignoreCase = true) -> "TV Shows"
-                    else -> "All"
+                val isAnimeRail = rail.id == "anime-universe" || rail.id.contains("anime", ignoreCase = true) || rail.title.contains("anime", ignoreCase = true)
+                if (isAnimeRail) {
+                    AnimeSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = "Anime" })
+                } else {
+                    val targetCategory = when {
+                        rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true) -> "Trending"
+                        rail.id == "bollywood" || rail.title.contains("Bollywood", ignoreCase = true) -> "Movies"
+                        rail.id == "hollywood" || rail.title.contains("Hollywood", ignoreCase = true) -> "Movies"
+                        rail.id == "web-series" || rail.title.contains("Series", ignoreCase = true) -> "TV Shows"
+                        else -> "All"
+                    }
+                    RailSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = targetCategory })
                 }
-                RailSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = targetCategory })
             }
         }
     }
@@ -400,8 +409,8 @@ private fun HeroBanner(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(410.dp)
-            .padding(horizontal = Spacing.md)
+            .height(460.dp)
+            .padding(horizontal = Spacing.lg)
             .clip(RoundedCornerShape(20.dp))
             .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
     ) {
@@ -542,159 +551,7 @@ private fun HeroBanner(
     }
 }
 
-/**
- * Feature Highlights Section on Home Screen
- */
-@Composable
-private fun FeatureHighlightsSection(rail: Rail, onTitleClick: (Title) -> Unit) {
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.md)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp, 16.dp)
-                        .clip(Radius.pill)
-                        .background(AccentPrimary)
-                )
-                Text(
-                    text = "FEATURE HIGHLIGHTS",
-                    style = StreamFlowType.sectionHeader.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = TextPrimary
-                )
-            }
-            Text(
-                text = "Explore All",
-                style = StreamFlowType.caption,
-                color = AccentPrimary
-            )
-        }
-        Spacer(Modifier.height(Spacing.sm))
 
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = Spacing.md),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            items(rail.titles, key = { "fh_${it.id}" }) { title ->
-                FeatureHighlightCard(title = title, onClick = { onTitleClick(title) })
-            }
-        }
-    }
-}
-
-@Composable
-private fun FeatureHighlightCard(title: Title, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .width(280.dp)
-            .height(165.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, GlassBorder, RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        AsyncImage(
-            model = title.posterUrl,
-            contentDescription = title.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Gradient overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0.0f to Color.Black.copy(alpha = 0.2f),
-                            0.5f to Color.Transparent,
-                            1.0f to Color.Black.copy(alpha = 0.9f)
-                        )
-                    )
-                )
-        )
-
-        // Top tag badge
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(8.dp)
-                .clip(Radius.chip)
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 8.dp, vertical = 3.dp)
-        ) {
-            Text(
-                text = if (title.genres.contains("Anime")) "✨ ANIME SPOTLIGHT" else "⭐ FEATURED PICK",
-                style = StreamFlowType.caption.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentStar
-                )
-            )
-        }
-
-        // Bottom title info
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(12.dp)
-        ) {
-            Text(
-                text = title.name,
-                style = StreamFlowType.body.copy(fontWeight = FontWeight.Bold),
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (title.imdbRating > 0) {
-                    Text(
-                        text = "★ ${title.imdbRating}",
-                        style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                        color = AccentStar
-                    )
-                }
-                Text(
-                    text = "• ${title.genres.firstOrNull() ?: "StreamFlow"}",
-                    style = StreamFlowType.caption.copy(fontSize = 10.sp),
-                    color = TextSecondary
-                )
-            }
-        }
-
-        // Play Button Overlay
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(12.dp)
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(AccentPrimary),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = "Play",
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-    }
-}
 
 /**
  * Anime Section (Placed right after Web Series)
@@ -829,6 +686,135 @@ private fun RailSection(
                     ratingLabel = if (title.imdbRating > 0) "${title.imdbRating}" else null,
                     rankBadge = if (isTrending) index + 1 else null,
                     onClick = { onTitleClick(title) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinueWatchingSection(
+    rail: Rail,
+    onTitleClick: (Title) -> Unit
+) {
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.md)
+                .padding(top = Spacing.sm)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(3.dp, 16.dp)
+                        .clip(Radius.pill)
+                        .background(AccentPrimary)
+                )
+                Text(
+                    text = "CONTINUE WATCHING",
+                    style = StreamFlowType.sectionHeader.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = TextPrimary
+                )
+            }
+        }
+        Spacer(Modifier.height(Spacing.xs))
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = Spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            items(rail.titles, key = { "cw_${it.id}" }) { title ->
+                ContinueWatchingCard(title = title, onClick = { onTitleClick(title) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContinueWatchingCard(title: Title, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .width(220.dp)
+            .height(135.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, GlassBorder, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+    ) {
+        AsyncImage(
+            model = title.backdropUrl.ifBlank { title.posterUrl },
+            contentDescription = title.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Vignette gradient
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.2f),
+                            Color.Black.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+        )
+
+        // Center play icon
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(AccentPrimary.copy(alpha = 0.9f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Resume",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        // Bottom title label & progress bar
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(10.dp)
+        ) {
+            Text(
+                text = title.name,
+                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(6.dp))
+            // Progress Bar (sample progress)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(Radius.pill)
+                    .background(Color.White.copy(alpha = 0.3f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.65f)
+                        .height(3.dp)
+                        .clip(Radius.pill)
+                        .background(AccentPrimary)
                 )
             }
         }

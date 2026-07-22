@@ -69,14 +69,16 @@ fun PlayerControlsSheet(
     audioTracks: List<TrackOption>,
     subtitleTracks: List<TrackOption>,
     videoQualities: List<VideoQualityOption>,
+    subtitleStyle: com.streamflow.app.ui.screens.player.SubtitleStyleConfig = com.streamflow.app.ui.screens.player.SubtitleStyleConfig(),
     onSelectSpeed: (Float) -> Unit,
     onSelectAudioTrack: (TrackOption) -> Unit,
     onSelectSubtitleTrack: (TrackOption) -> Unit,
     onSelectVideoQuality: (VideoQualityOption) -> Unit,
+    onUpdateSubtitleStyle: (com.streamflow.app.ui.screens.player.SubtitleStyleConfig) -> Unit = {},
     onDismiss: () -> Unit
 ) {
     var activeTab by remember { mutableStateOf(SettingsTab.QUALITY) }
-    val speeds = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+    val speeds = listOf(0.5f, 1.0f, 1.25f, 1.5f, 2.0f)
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -256,6 +258,58 @@ fun PlayerControlsSheet(
                                         trackName = track.name,
                                         isSelected = track.isSelected,
                                         onClick = { onSelectSubtitleTrack(track) }
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(Spacing.md))
+                            Text(
+                                text = "CAPTION FONT SIZE",
+                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                                color = TextSecondary
+                            )
+                            Spacer(Modifier.height(Spacing.xs))
+                            val fontSizes = listOf(14 to "Small", 18 to "Medium", 22 to "Large")
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                                items(fontSizes) { (spVal, label) ->
+                                    val isSelected = subtitleStyle.fontSizeSp == spVal
+                                    Text(
+                                        text = label,
+                                        style = StreamFlowType.pillLabel,
+                                        color = if (isSelected) Color.White else TextPrimary,
+                                        modifier = Modifier
+                                            .clip(Radius.pill)
+                                            .background(if (isSelected) AccentPrimary else BgCard)
+                                            .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(fontSizeSp = spVal)) }
+                                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(Spacing.md))
+                            Text(
+                                text = "TEXT COLOR",
+                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                                color = TextSecondary
+                            )
+                            Spacer(Modifier.height(Spacing.xs))
+                            val colors = listOf(
+                                0xFFFFFFFFL to "White",
+                                0xFFFFCC00L to "Yellow",
+                                0xFF00E5FFL to "Cyan"
+                            )
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                                items(colors) { (colorVal, label) ->
+                                    val isSelected = subtitleStyle.textColorArgb == colorVal
+                                    Text(
+                                        text = label,
+                                        style = StreamFlowType.pillLabel,
+                                        color = if (isSelected) Color.White else TextPrimary,
+                                        modifier = Modifier
+                                            .clip(Radius.pill)
+                                            .background(if (isSelected) AccentPrimary else BgCard)
+                                            .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(textColorArgb = colorVal)) }
+                                            .padding(horizontal = 14.dp, vertical = 6.dp)
                                     )
                                 }
                             }

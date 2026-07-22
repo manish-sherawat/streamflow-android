@@ -30,26 +30,33 @@ import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 
-// Dark-base shimmer: three-stop sweep from card surface → slight highlight → back
-private val shimmerBase    = Color(0xFF161616)
-private val shimmerPeak    = Color(0xFF2C2C2C)
+// Metallic dark-silver shimmer: multi-stop metallic sweep gradient
+private val shimmerBase      = Color(0xFF14171E)
+private val shimmerMid       = Color(0xFF2E3442)
+private val shimmerHighlight = Color(0xFF566075)
 
 @Composable
 fun ShimmerBrush(
-    targetValue: Float = 1000f,
+    targetValue: Float = 1200f,
     showShimmer: Boolean = true
 ): Brush {
     if (!showShimmer) {
         return Brush.linearGradient(colors = listOf(shimmerBase, shimmerBase))
     }
-    val shimmerColors = listOf(shimmerBase, shimmerPeak, shimmerBase)
+    val shimmerColors = listOf(
+        shimmerBase,
+        shimmerMid,
+        shimmerHighlight,
+        shimmerMid,
+        shimmerBase
+    )
 
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val translateAnimation by transition.animateFloat(
         initialValue = 0f,
         targetValue  = targetValue,
         animationSpec = infiniteRepeatable(
-            animation  = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
+            animation  = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmerTranslate"
@@ -57,8 +64,8 @@ fun ShimmerBrush(
 
     return Brush.linearGradient(
         colors = shimmerColors,
-        start  = Offset.Zero,
-        end    = Offset(x = translateAnimation, y = translateAnimation * 0.4f)
+        start  = Offset(x = translateAnimation - 400f, y = translateAnimation * 0.5f - 200f),
+        end    = Offset(x = translateAnimation, y = translateAnimation * 0.75f)
     )
 }
 

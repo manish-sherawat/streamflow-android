@@ -21,6 +21,12 @@ import com.streamflow.app.ui.screens.profile.ProfileScreen
 import com.streamflow.app.ui.screens.profile.WatchlistScreen
 import com.streamflow.app.ui.screens.search.SearchScreen
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+
 private val topLevelRoutes = bottomNavDestinations.map { it.route }.toSet()
 
 @Composable
@@ -35,7 +41,11 @@ fun StreamFlowNavGraph(navController: NavHostController = rememberNavController(
         Box(modifier = Modifier.weight(1f)) {
             NavHost(
                 navController = navController,
-                startDestination = Destination.Auth.route
+                startDestination = Destination.Auth.route,
+                enterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { 200 }, animationSpec = tween(220)) },
+                exitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { -200 }, animationSpec = tween(220)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { -200 }, animationSpec = tween(220)) },
+                popExitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { 200 }, animationSpec = tween(220)) }
             ) {
                 composable(Destination.Auth.route) {
                     AuthScreen(onAuthSuccess = {

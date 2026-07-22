@@ -74,28 +74,26 @@ fun FloatingBottomNav(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .background(BgCard)
     ) {
-        // Floating nav pill with deep elevated surface
+        // Subtle top divider
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Divider)
+        )
+
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .height(62.dp)
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            BgElevated,
-                            BgCard
-                        )
-                    )
-                )
                 .padding(horizontal = 8.dp)
         ) {
             navItems.forEach { item ->

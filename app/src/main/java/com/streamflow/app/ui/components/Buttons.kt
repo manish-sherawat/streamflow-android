@@ -41,6 +41,13 @@ import com.streamflow.app.ui.theme.StreamFlowType
 import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+
 /**
  * Primary CTA — crisp white pill button with deep play icon.
  * Used for Watch Now, Play Now, primary actions.
@@ -53,6 +60,13 @@ fun PrimaryButton(
     icon: ImageVector = Icons.Filled.PlayArrow
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+        label = "primaryButtonScale"
+    )
+    val haptic = LocalHapticFeedback.current
 
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -60,12 +74,19 @@ fun PrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(46.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(Radius.pill)
             .background(TextPrimary)
             .clickable(
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = Color.Black.copy(alpha = 0.15f)),
-                onClick = onClick
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                }
             )
     ) {
         Icon(
@@ -94,6 +115,13 @@ fun SecondaryButton(
     icon: ImageVector = Icons.Filled.Add
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+        label = "secondaryButtonScale"
+    )
+    val haptic = LocalHapticFeedback.current
     val isSaved = label.contains("Saved", ignoreCase = true)
 
     val borderColor by animateColorAsState(
@@ -123,13 +151,20 @@ fun SecondaryButton(
         modifier = modifier
             .wrapContentWidth()
             .height(46.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(Radius.pill)
             .background(bgColor)
             .border(1.dp, borderColor, Radius.pill)
             .clickable(
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = AccentPrimary.copy(alpha = 0.15f)),
-                onClick = onClick
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                }
             )
             .padding(horizontal = 20.dp)
     ) {
@@ -159,6 +194,13 @@ fun AccentButton(
     icon: ImageVector? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+        label = "accentButtonScale"
+    )
+    val haptic = LocalHapticFeedback.current
 
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -166,6 +208,10 @@ fun AccentButton(
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(Radius.pill)
             .background(
                 Brush.horizontalGradient(
@@ -175,7 +221,10 @@ fun AccentButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = Color.White.copy(alpha = 0.2f)),
-                onClick = onClick
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onClick()
+                }
             )
     ) {
         if (icon != null) {
