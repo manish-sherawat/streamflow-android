@@ -15,19 +15,32 @@ android {
         applicationId = "com.streamflow.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0-mvp"
+        versionCode = 2
+        versionName = "1.0.0"
         vectorDrawables.useSupportLibrary = true
+        // Strip unused translation resources (saves ~3MB)
+        resourceConfigurations += listOf("en")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isMinifyEnabled = false
+            isShrinkResources = false
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 

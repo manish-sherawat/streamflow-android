@@ -26,17 +26,25 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.window.Dialog
+import com.streamflow.app.ui.components.PrimaryButton
+import com.streamflow.app.ui.components.SecondaryButton
+import com.streamflow.app.ui.theme.BgElevated
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -83,6 +91,8 @@ fun ProfileScreen(
     val isAuthenticated    by viewModel.isAuthenticated.collectAsState()
     val isDataSaverEnabled by viewModel.isDataSaverEnabled.collectAsState()
     val downloadedTitles   by viewModel.downloadedTitles.collectAsState()
+    val updateState        by viewModel.updateState.collectAsState()
+    val uriHandler         = LocalUriHandler.current
 
     var showProfileDialog  by remember { mutableStateOf(false) }
     var showAdminAddDialog by remember { mutableStateOf(false) }
@@ -362,6 +372,19 @@ fun ProfileScreen(
                         )
                     )
                 }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 52.dp),
+                    color = Divider,
+                    thickness = 0.5.dp
+                )
+
+                SettingsRow(
+                    icon = Icons.Filled.SystemUpdate,
+                    label = "Check for App Updates",
+                    sublabel = "Current version: v${com.streamflow.app.BuildConfig.VERSION_NAME}",
+                    onClick = { viewModel.checkForUpdates() }
+                )
             }
             Spacer(modifier = Modifier.height(Spacing.md))
         }
@@ -476,6 +499,132 @@ fun ProfileScreen(
                         modifier = Modifier.padding(start = Spacing.md)
                     )
                 }
+            }
+        }
+    }
+
+    if (updateState.isChecking) {
+        Dialog(onDismissRequest = { }) {
+            Box(
+                modifier = Modifier
+                    .clip(Radius.card)
+                    .background(BgElevated)
+                    .border(1.dp, GlassBorder, Radius.card)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator(color = AccentPrimary, modifier = Modifier.size(24.dp))
+                    Text("Checking GitHub for updates...", style = StreamFlowType.body, color = TextPrimary)
+                }
+            }
+        }
+    }
+
+    if (updateState.hasUpdate) {
+        Dialog(onDismissRequest = { viewModel.dismissUpdateState() }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(Radius.card)
+                    .background(BgElevated)
+                    .border(1.dp, GlassBorder, Radius.card)
+                    .padding(24.dp)
+            ) {
+                Icon(
+                    Icons.Filled.SystemUpdate,
+                    contentDescription = null,
+                    tint = AccentPrimary,
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "Update Available! (${updateState.latestVersion})",
+                    style = StreamFlowType.sheetHeader.copy(fontWeight = FontWeight.Bold),
+                    color = TextPrimary
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "A new version of StreamFlow is ready to install.",
+                    style = StreamFlowType.body,
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "What's New:",
+                    style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                    color = TextPrimary
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = updateState.changelog,
+                    style = StreamFlowType.caption,
+                    color = TextSecondary,
+                    maxLines = 4,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SecondaryButton(
+                        label = "Later",
+                        onClick = { viewModel.dismissUpdateState() },
+                        modifier = Modifier.weight(1f)
+                    )
+                    PrimaryButton(
+                        label = "Update Now",
+                        icon = Icons.Filled.SystemUpdate,
+                        onClick = {
+                            uriHandler.openUri(updateState.downloadUrl)
+                            viewModel.dismissUpdateState()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+
+    if (updateState.isUpToDate) {
+        Dialog(onDismissRequest = { viewModel.dismissUpdateState() }) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(Radius.card)
+                    .background(BgElevated)
+                    .border(1.dp, GlassBorder, Radius.card)
+                    .padding(24.dp)
+            ) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF34C759),
+                    modifier = Modifier.size(44.dp)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "StreamFlow is Up to Date",
+                    style = StreamFlowType.sheetHeader.copy(fontWeight = FontWeight.Bold),
+                    color = TextPrimary
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "You are running the latest release (v${com.streamflow.app.BuildConfig.VERSION_NAME}).",
+                    style = StreamFlowType.body,
+                    color = TextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(Modifier.height(18.dp))
+                PrimaryButton(
+                    label = "OK",
+                    onClick = { viewModel.dismissUpdateState() }
+                )
             }
         }
     }

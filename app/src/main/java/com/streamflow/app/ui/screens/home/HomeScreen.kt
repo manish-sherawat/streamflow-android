@@ -31,9 +31,11 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -140,6 +142,77 @@ fun HomeScreen(
             containerColor = BgCard,
             contentColor = AccentPrimary
         )
+
+        val updateState by viewModel.updateState.collectAsState()
+        val uriHandler = LocalUriHandler.current
+
+        updateState?.let { update ->
+            if (update.hasUpdate) {
+                Dialog(onDismissRequest = { viewModel.dismissUpdateModal() }) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(Radius.card)
+                            .background(com.streamflow.app.ui.theme.BgElevated)
+                            .border(1.dp, com.streamflow.app.ui.theme.GlassBorder, Radius.card)
+                            .padding(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.SystemUpdate,
+                            contentDescription = null,
+                            tint = AccentPrimary,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = "New Update Available! (${update.latestVersion})",
+                            style = StreamFlowType.sheetHeader.copy(fontWeight = FontWeight.Bold),
+                            color = TextPrimary
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = "A new version of StreamFlow is ready on GitHub.",
+                            style = StreamFlowType.body,
+                            color = TextSecondary
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = "What's New:",
+                            style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                            color = TextPrimary
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = update.changelog,
+                            style = StreamFlowType.caption,
+                            color = TextSecondary,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            com.streamflow.app.ui.components.SecondaryButton(
+                                label = "Later",
+                                onClick = { viewModel.dismissUpdateModal() },
+                                modifier = Modifier.weight(1f)
+                            )
+                            com.streamflow.app.ui.components.PrimaryButton(
+                                label = "Update Now",
+                                icon = Icons.Filled.SystemUpdate,
+                                onClick = {
+                                    uriHandler.openUri(update.downloadUrl)
+                                    viewModel.dismissUpdateModal()
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

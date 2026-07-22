@@ -12,11 +12,23 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import kotlinx.coroutines.Dispatchers
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONObject
+
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data class Success(val rails: List<Rail>) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
+
+data class SilentUpdateState(
+    val hasUpdate: Boolean = false,
+    val latestVersion: String = "",
+    val changelog: String = "",
+    val downloadUrl: String = ""
+)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -29,9 +41,69 @@ class HomeViewModel @Inject constructor(
     private val _watchlistIds = MutableStateFlow<Set<String>>(emptySet())
     val watchlistIds: StateFlow<Set<String>> = _watchlistIds.asStateFlow()
 
+    private val _updateState = MutableStateFlow<SilentUpdateState?>(null)
+    val updateState: StateFlow<SilentUpdateState?> = _updateState.asStateFlow()
+
     init {
         loadHome()
         refreshWatchlist()
+        checkSilentUpdate()
+    }
+
+    fun checkSilentUpdate() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val url = URL("https://api.github.com/repos/manish-sherawat/streamflow-android/releases/latest")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+                connection.connectTimeout = 4000
+                connection.readTimeout = 4000
+                if (connection.responseCode == 200) {
+                    val text = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(text)
+                    val tagName = json.optString("tag_name", "")
+                    val changelog = json.optString("body", "Bug fixes and performance improvements.")
+                    val assets = json.optJSONArray("assets")
+                    var apkUrl = ""
+                    if (assets != null && assets.length() > 0) {
+                        for (i in 0 until assets.length()) {
+                            val asset = assets.getJSONObject(i)
+                            if (asset.optString("name", "").endsWith(".apk")) {
+                                apkUrl = asset.optString("browser_download_url", "")
+                                break
+                            }
+                        }
+                    }
+                    val latestClean = tagName.removePrefix("v").trim()
+                    val currentClean = com.streamflow.app.BuildConfig.VERSION_NAME.removePrefix("v").trim()
+                    if (isVersionNewer(latestClean, currentClean)) {
+                        _updateState.value = SilentUpdateState(
+                            hasUpdate = true,
+                            latestVersion = tagName,
+                            changelog = changelog,
+                            downloadUrl = apkUrl.ifEmpty { "https://github.com/manish-sherawat/streamflow-android/releases" }
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore network errors during silent background check
+            }
+        }
+    }
+
+    private fun isVersionNewer(latest: String, current: String): Boolean {
+        val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
+        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
+        for (i in 0 until minOf(latestParts.size, currentParts.size)) {
+            if (latestParts[i] > currentParts[i]) return true
+            if (latestParts[i] < currentParts[i]) return false
+        }
+        return latestParts.size > currentParts.size
+    }
+
+    fun dismissUpdateModal() {
+        _updateState.value = null
     }
 
     fun refreshWatchlist() {
