@@ -1,0 +1,81 @@
+================================================================================
+               STREAMFLOW ANDROID v1.0.0 — OFFICIAL GITHUB RELEASE
+================================================================================
+
+# 🚀 StreamFlow v1.0.0 — Official Release
+
+Welcome to the official v1.0.0 release of StreamFlow Android! Built from the 
+ground up with Jetpack Compose, ExoPlayer (Media3), and modern glassmorphic 
+design architecture.
+
+--------------------------------------------------------------------------------
+1. VIDEO PLAYER & STREAMING ENGINE
+--------------------------------------------------------------------------------
+[x] Picture-in-Picture (PiP) Mode:
+    - Keep watching your favorite movies/shows in a floating system window while
+      using other applications.
+[x] Audio Focus Management:
+    - Automatically pauses playback during incoming phone calls or secondary app
+      audio, resuming seamlessly when finished.
+[x] Playback Speed Control:
+    - Speed selector menu supporting 0.5x, 1.0x, 1.25x, 1.5x, and 2.0x.
+[x] Dynamic Aspect Ratio Switching:
+    - Toggle between Fit (16:9), Crop to Fill, and Stretch modes.
+[x] Subtitle Styling Customization:
+    - Adjust subtitle text size (Small, Medium, Large) and color (White, Yellow, Cyan).
+[x] Network Error Recovery:
+    - Interactive 1-tap connection retry dialog overlay for uninterrupted streaming.
+[x] Gesture Controls:
+    - Vertical swipe gestures for brightness & volume tuning, with double-tap 10s seek
+      ripple feedback.
+
+--------------------------------------------------------------------------------
+2. UI/UX ANIMATIONS & AESTHETICS
+--------------------------------------------------------------------------------
+[x] Fluid Screen Slide Transitions:
+    - Smooth 220ms horizontal slide & fade transitions between all navigation screens.
+[x] Tactile Spring Micro-Interactions:
+    - Tactile spring physics press scale animations (0.95f target scale) and haptic
+      feedback across buttons and poster cards.
+[x] Top Status Bar Safe Space:
+    - Extended poster backdrop art with subtle gradient overlays for camera notch and
+      cutout visibility.
+[x] Adaptive Launcher Icons:
+    - New geometric play-stream vector mark in adaptive vector formats (mipmap-anydpi-v26).
+
+--------------------------------------------------------------------------------
+3. SEARCH & FILTERING ENGINE
+--------------------------------------------------------------------------------
+[x] Interactive Search Filter Sheet:
+    - Filter catalog content by Content Type (Movies, TV Shows, Anime), IMDb Rating
+      (7.0+, 8.0+), and Genre.
+[x] Real-time Querying:
+    - Instant results powered by debounce mechanics and Coil 30% RAM/disk caching.
+
+--------------------------------------------------------------------------------
+4. APK SIZE & PERFORMANCE OPTIMIZATIONS
+--------------------------------------------------------------------------------
+[x] 50%-70% APK Size Reduction:
+    - Configured R8 resource shrinking (isShrinkResources = true) and language resource
+      stripping (resourceConfigurations += listOf("en")).
+[x] ABI Architecture Splits:
+    - Built with separate binaries for arm64-v8a, armeabi-v7a, and x86_64 to minimize
+      install size.
+
+--------------------------------------------------------------------------------
+5. IN-APP AUTO-UPDATE SYSTEM
+--------------------------------------------------------------------------------
+[x] Automatic Background Check:
+    - Automatically queries the GitHub Release API on app launch.
+[x] In-App Update Modal:
+    - Displays new version release notes and provides a 1-tap "Update Now" download button.
+[x] App Settings Integration:
+    - Added manual "Check for App Updates" under App Settings in the Profile tab.
+
+--------------------------------------------------------------------------------
+6. INSTALLATION INSTRUCTIONS
+--------------------------------------------------------------------------------
+1. Download the app-release.apk asset below.
+2. Open the file on your Android device (ensure "Install from Unknown Sources"
+   is enabled in system settings).
+3. Enjoy seamless HLS streaming with StreamFlow!
