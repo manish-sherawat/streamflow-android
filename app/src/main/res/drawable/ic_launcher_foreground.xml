@@ -3,8 +3,18 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Simple rounded play-triangle brand mark, centered in the 66x66 safe zone -->
+    <!-- StreamFlow Outer Glow Ring -->
     <path
-        android:fillColor="#F5F6F8"
-        android:pathData="M42,34 L76,54 L42,74 Z" />
+        android:fillColor="#1F00E5FF"
+        android:pathData="M54,20 C72.78,20 88,35.22 88,54 C88,72.78 72.78,88 54,88 C35.22,88 20,72.78 20,54 C20,35.22 35.22,20 54,20 Z" />
+
+    <!-- StreamFlow Cyan Play Stream Ribbon -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M40,32 C40,32 68,50 78,54 C68,58 40,76 40,76 L48,54 Z" />
+
+    <!-- StreamFlow Core Bright Play Triangle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,35 L74,54 L42,73 Z" />
 </vector>
