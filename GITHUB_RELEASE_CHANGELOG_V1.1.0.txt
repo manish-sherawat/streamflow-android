@@ -1,67 +1,13 @@
-================================================================================
-          🎬 STREAMFLOW ANDROID v1.1.0 — OFFICIAL RELEASE CHANGELOG
-================================================================================
+# 🎬 StreamFlow v1.1.0 — Release Notes
 
-# 🚀 StreamFlow v1.1.0 — Major UI/UX, Navigation & Player Sensitivity Update
+### 🚀 What's New
+- **Category Grid View**: Tapping category chips (Movies, TV Shows, Web Series, Anime, Trending) opens a responsive 3-column grid layout with title counters.
+- **Full-Screen "See All" Modal**: Displays expanded section titles in a full-screen grid window.
+- **Sequential Hero Carousel**: Removed title shuffling so latest and featured titles show in exact chronological order with radial ambient glow.
+- **Tuned Player Gestures**: Reduced brightness and volume drag sensitivity for smooth, precise swipe controls.
+- **Electric Blue Nav Theme**: Replaced purple container colors in the floating bottom nav bar with signature Electric Blue (`#2563EB`).
+- **Watchlist Auto-Sync**: Fixed "My List" auto-refresh and title resolution across all rails.
+- **Pull-to-Refresh & UI Polish**: Standardized Anime World styling, fixed pull-to-refresh gestures, and removed VIP PRO badge.
 
-StreamFlow Android v1.1.0 is here! This major update brings Category Grid 
-Transformations, Hero Carousel Sequential Ordering, Video Player Gesture Tuning, 
-Electric Blue Theme Standardization, and Watchlist Auto-Sync.
-
---------------------------------------------------------------------------------
-📱 1. HOME SCREEN & CATEGORY GRID TRANSFORMATIONS
---------------------------------------------------------------------------------
-[🎛️] Interactive Category Chips Grid View:
-     - Tapping category chips (`Movies`, `TV Shows`, `Web Series`, `Anime`, `Trending`) 
-       instantly switches the layout from horizontal rails to a responsive **3-Column Grid 
-       (`LazyVerticalGrid`)** featuring section headers, item counts, and rank badges (#1, #2, #3...).
-[🪟] Full-Screen "See All" Grid Window:
-     - Clicking "See All" on any content section opens a full-screen grid window with 
-       item count badge (`X Items`), header bar, and direct title navigation.
-[✨] Hero Carousel Ambient Glow & Sequential Order:
-     - Added subtle radial ambient accent glow behind the Hero Carousel.
-     - Removed random title shuffling in `NeonCatalogRepository` to display latest and 
-       newly added titles in exact, stable chronological sequence.
-[🎨] Anime World Section Standardization:
-     - Standardized accent pill bar (3.dp width, `AccentPrimary`), uppercase typography (13.sp), 
-       header padding (`Spacing.sm`), and IMDb rating formatting.
-[🧹] Header Clean Up:
-     - Removed `VIP PRO` badge from top right of `TopBrandBar` for a cleaner brand header.
-
---------------------------------------------------------------------------------
-🎥 2. VIDEO PLAYER GESTURE SENSITIVITY REDUCTION
---------------------------------------------------------------------------------
-[☀️] Fine-Tuned Brightness Gesture Control:
-     - Reduced vertical brightness drag sensitivity (using 1800f denominator factor) 
-       for smooth, gradual brightness adjustments without sudden brightness jumps.
-[🔊] Distance-Accumulated Volume Gesture Control:
-     - Replaced per-pixel volume step increments with vertical distance accumulation 
-       (80px threshold per step) to eliminate hyper-sensitive volume spikes during swipes.
-
---------------------------------------------------------------------------------
-🎨 3. FLOATING NAVIGATION BAR COLOR THEME UPDATE
---------------------------------------------------------------------------------
-[⚡] Electric Blue Brand Theme Alignment:
-     - Replaced Material 3 purple/violet container tints in `FloatingBottomNav.kt` with 
-       the app's signature **Electric Blue (`#2563EB`)** icon indicators, active tab glow 
-       pills (`AccentPrimary.copy(alpha = 0.15f)`), and glassmorphic surface borders (`GlassBorder`).
-
---------------------------------------------------------------------------------
-📌 4. WATCHLIST / MY LIST & PULL-TO-REFRESH FIXES
---------------------------------------------------------------------------------
-[🔖] Automatic Watchlist Auto-Sync:
-     - Added `LaunchedEffect(Unit)` in `WatchlistScreen.kt` to auto-fetch saved titles 
-       whenever the user switches to the "My List" tab.
-     - Enhanced `getTitle` in `NeonCatalogRepository` to look up cached titles, fallback 
-       titles, fallback anime titles, and cached rails to guarantee saved items resolve.
-[🔄] Pull-To-Refresh Gesture Fix:
-     - Fixed race condition between `rememberPullToRefreshState()` and ViewModel state 
-       where pull-to-refresh prematurely called `endRefresh()` during swipe gestures.
-
---------------------------------------------------------------------------------
-🛠️ 5. INSTALLATION GUIDE
---------------------------------------------------------------------------------
-1. 📥 Download the `app-release.apk` asset attached below.
-2. 🔓 Open the APK on your Android device ("Allow installation from unknown sources").
-3. 🍿 Enjoy high-speed streaming with StreamFlow v1.1.0!
-================================================================================
+---
+📥 Download `app-release.apk` below and enjoy high-speed streaming!
