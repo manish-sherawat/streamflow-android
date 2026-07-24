@@ -15,4 +15,5 @@ interface CatalogRepository {
     suspend fun getWatchlist(): List<Title>
     suspend fun updateProgress(titleId: String, episodeId: String?, positionSec: Int, durationSec: Int)
     suspend fun getPlaybackUrl(titleId: String, episodeId: String? = null): String
+    suspend fun submitReport(titleId: String, titleName: String, issueType: String, details: String): Result<Unit>
 }

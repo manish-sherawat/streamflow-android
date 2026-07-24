@@ -1,10 +1,16 @@
 package com.streamflow.app.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,19 +19,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.streamflow.app.ui.components.FloatingBottomNav
-import com.streamflow.app.ui.screens.auth.AuthScreen
 import com.streamflow.app.ui.screens.detail.TitleDetailScreen
 import com.streamflow.app.ui.screens.home.HomeScreen
 import com.streamflow.app.ui.screens.player.PlayerScreen
 import com.streamflow.app.ui.screens.profile.ProfileScreen
 import com.streamflow.app.ui.screens.profile.WatchlistScreen
 import com.streamflow.app.ui.screens.search.SearchScreen
-
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 
 private val topLevelRoutes = bottomNavDestinations.map { it.route }.toSet()
 
@@ -36,81 +35,65 @@ fun StreamFlowNavGraph(navController: NavHostController = rememberNavController(
 
     val showBottomNav = currentRoute in topLevelRoutes
 
-    // Column-based layout so the bottom nav sits at the absolute bottom edge
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.weight(1f)) {
-            NavHost(
-                navController = navController,
-                startDestination = Destination.Auth.route,
-                enterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { 200 }, animationSpec = tween(220)) },
-                exitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { -200 }, animationSpec = tween(220)) },
-                popEnterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { -200 }, animationSpec = tween(220)) },
-                popExitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { 200 }, animationSpec = tween(220)) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = Destination.Home.route,
+            modifier = Modifier.fillMaxSize(),
+            enterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { 200 }, animationSpec = tween(220)) },
+            exitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { -200 }, animationSpec = tween(220)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(220)) + slideInHorizontally(initialOffsetX = { -200 }, animationSpec = tween(220)) },
+            popExitTransition = { fadeOut(animationSpec = tween(220)) + slideOutHorizontally(targetOffsetX = { 200 }, animationSpec = tween(220)) }
+        ) {
+            composable(Destination.Home.route) {
+                HomeScreen(onTitleClick = { title ->
+                    navController.navigate(Destination.TitleDetail.createRoute(title.id))
+                })
+            }
+            composable(Destination.Search.route) {
+                SearchScreen(onTitleClick = { title ->
+                    navController.navigate(Destination.TitleDetail.createRoute(title.id))
+                })
+            }
+            composable(Destination.Watchlist.route) {
+                WatchlistScreen(onTitleClick = { title ->
+                    navController.navigate(Destination.TitleDetail.createRoute(title.id))
+                })
+            }
+            composable(Destination.Profile.route) {
+                ProfileScreen(
+                    onTitleClick = { title ->
+                        navController.navigate(Destination.TitleDetail.createRoute(title.id))
+                    },
+                    onOpenAuth = {},
+                    onSignOut = {}
+                )
+            }
+            composable(
+                route = Destination.TitleDetail.route,
+                arguments = listOf(navArgument("titleId") { })
             ) {
-                composable(Destination.Auth.route) {
-                    AuthScreen(onAuthSuccess = {
-                        navController.navigate(Destination.Home.route) {
-                            popUpTo(Destination.Auth.route) { inclusive = true }
-                        }
-                    })
-                }
-                composable(Destination.Home.route) {
-                    HomeScreen(onTitleClick = { title ->
+                TitleDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onPlay = { titleId, episodeId ->
+                        navController.navigate(Destination.Player.createRoute(titleId, episodeId))
+                    },
+                    onTitleClick = { title ->
                         navController.navigate(Destination.TitleDetail.createRoute(title.id))
-                    })
-                }
-                composable(Destination.Search.route) {
-                    SearchScreen(onTitleClick = { title ->
-                        navController.navigate(Destination.TitleDetail.createRoute(title.id))
-                    })
-                }
-                composable(Destination.Watchlist.route) {
-                    WatchlistScreen(onTitleClick = { title ->
-                        navController.navigate(Destination.TitleDetail.createRoute(title.id))
-                    })
-                }
-                composable(Destination.Profile.route) {
-                    ProfileScreen(
-                        onTitleClick = { title ->
-                            navController.navigate(Destination.TitleDetail.createRoute(title.id))
-                        },
-                        onOpenAuth = {
-                            navController.navigate(Destination.Auth.route)
-                        },
-                        onSignOut = {
-                            navController.navigate(Destination.Auth.route) {
-                                popUpTo(Destination.Home.route) { inclusive = true }
-                            }
-                        }
-                    )
-                }
-                composable(
-                    route = Destination.TitleDetail.route,
-                    arguments = listOf(navArgument("titleId") { })
-                ) {
-                    TitleDetailScreen(
-                        onBack = { navController.popBackStack() },
-                        onPlay = { titleId, episodeId ->
-                            navController.navigate(Destination.Player.createRoute(titleId, episodeId))
-                        },
-                        onTitleClick = { title ->
-                            navController.navigate(Destination.TitleDetail.createRoute(title.id))
-                        }
-                    )
-                }
-                composable(
-                    route = Destination.Player.route,
-                    arguments = listOf(
-                        navArgument("titleId") { },
-                        navArgument("episodeId") { nullable = true; defaultValue = null }
-                    )
-                ) {
-                    PlayerScreen(onBack = { navController.popBackStack() })
-                }
+                    }
+                )
+            }
+            composable(
+                route = Destination.Player.route,
+                arguments = listOf(
+                    navArgument("titleId") { },
+                    navArgument("episodeId") { nullable = true; defaultValue = null }
+                )
+            ) {
+                PlayerScreen(onBack = { navController.popBackStack() })
             }
         }
 
-        // Minimalist full-width bottom nav — only on top-level tabs
         if (showBottomNav) {
             FloatingBottomNav(
                 currentRoute = currentRoute,
@@ -120,7 +103,8 @@ fun StreamFlowNavGraph(navController: NavHostController = rememberNavController(
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
     }

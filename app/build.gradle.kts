@@ -15,8 +15,8 @@ android {
         applicationId = "com.streamflow.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.1.0"
         vectorDrawables.useSupportLibrary = true
         // Strip unused translation resources (saves ~3MB)
         resourceConfigurations += listOf("en")
@@ -80,6 +80,12 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Material 3 Expressive dependencies (compatible with Kotlin 1.9.24)
+    implementation("com.materialkolor:material-kolor:1.7.0")
+    implementation("androidx.graphics:graphics-shapes:1.0.0-rc01")
+
+
 
     // ExoPlayer / Media3 (HLS)
     implementation("androidx.media3:media3-exoplayer:1.4.0")

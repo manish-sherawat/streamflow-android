@@ -99,16 +99,18 @@ fun PosterCard(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Cinematic bottom gradient scrim
+        // Cinematic top and bottom ambient gradient scrim for guaranteed text & badge contrast
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.45f to Color.Transparent,
-                            0.78f to Color.Black.copy(alpha = 0.55f),
-                            1.0f  to Color.Black.copy(alpha = 0.92f)
+                            0.0f  to Color.Black.copy(alpha = 0.50f),
+                            0.25f to Color.Transparent,
+                            0.50f to Color.Transparent,
+                            0.75f to Color.Black.copy(alpha = 0.65f),
+                            1.0f  to Color.Black.copy(alpha = 0.96f)
                         )
                     )
                 )
@@ -171,7 +173,7 @@ fun PosterCard(
                 Text(
                     text = titleLabel,
                     style = StreamFlowType.cardTitle,
-                    color = TextPrimary,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

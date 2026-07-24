@@ -1,11 +1,14 @@
 package com.streamflow.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,30 +31,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import com.streamflow.app.ui.theme.AccentGlow
-import com.streamflow.app.ui.theme.AccentPrimary
-import com.streamflow.app.ui.theme.AccentSecondary
-import com.streamflow.app.ui.theme.BgBase
-import com.streamflow.app.ui.theme.BgElevated
-import com.streamflow.app.ui.theme.GlassBorder
-import com.streamflow.app.ui.theme.Radius
-import com.streamflow.app.ui.theme.Sizes
-import com.streamflow.app.ui.theme.StreamFlowType
-import com.streamflow.app.ui.theme.TextPrimary
-import com.streamflow.app.ui.theme.TextSecondary
-
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
 
 /**
- * Primary CTA — crisp white pill button with deep play icon.
- * Used for Watch Now, Play Now, primary actions.
+ * StreamFlow Material 3 Expressive Primary CTA Button.
+ * Ultra-crisp Electric Blue pill button with white play icon & bold text.
  */
 @Composable
 fun PrimaryButton(
@@ -78,11 +67,11 @@ fun PrimaryButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(Radius.pill)
-            .background(TextPrimary)
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(MaterialTheme.colorScheme.primary)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Color.Black.copy(alpha = 0.15f)),
+                indication = rememberRipple(color = Color.White.copy(alpha = 0.25f)),
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
@@ -92,20 +81,20 @@ fun PrimaryButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = BgBase,
+            tint = Color.White,
             modifier = Modifier.size(19.dp)
         )
         Text(
             text = label,
-            style = StreamFlowType.buttonLabel,
-            color = BgBase,
-            modifier = Modifier.padding(start = 5.dp)
+            style = MaterialTheme.typography.labelLarge,
+            color = Color.White,
+            modifier = Modifier.padding(start = 6.dp)
         )
     }
 }
 
 /**
- * Secondary action — ghost pill with animated blue border for saved state.
+ * StreamFlow Secondary Action Button — Light surface pill button.
  */
 @Composable
 fun SecondaryButton(
@@ -125,22 +114,22 @@ fun SecondaryButton(
     val isSaved = label.contains("Saved", ignoreCase = true)
 
     val borderColor by animateColorAsState(
-        targetValue = if (isSaved) AccentPrimary else GlassBorder,
+        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
         animationSpec = tween(300),
         label = "secondaryBorderColor"
     )
     val bgColor by animateColorAsState(
-        targetValue = if (isSaved) AccentGlow else Color.Transparent,
+        targetValue = if (isSaved) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
         animationSpec = tween(300),
         label = "secondaryBgColor"
     )
     val iconTint by animateColorAsState(
-        targetValue = if (isSaved) AccentPrimary else TextPrimary,
+        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(300),
         label = "secondaryIconTint"
     )
     val labelColor by animateColorAsState(
-        targetValue = if (isSaved) AccentPrimary else TextPrimary,
+        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(300),
         label = "secondaryLabelColor"
     )
@@ -155,12 +144,12 @@ fun SecondaryButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(Radius.pill)
+            .clip(MaterialTheme.shapes.extraLarge)
             .background(bgColor)
-            .border(1.dp, borderColor, Radius.pill)
+            .border(1.dp, borderColor, MaterialTheme.shapes.extraLarge)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = AccentPrimary.copy(alpha = 0.15f)),
+                indication = rememberRipple(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
@@ -176,7 +165,7 @@ fun SecondaryButton(
         )
         Text(
             text = label,
-            style = StreamFlowType.pillLabel,
+            style = MaterialTheme.typography.labelLarge,
             color = labelColor,
             modifier = Modifier.padding(start = 7.dp)
         )
@@ -184,7 +173,7 @@ fun SecondaryButton(
 }
 
 /**
- * Blue accent button — primary branded CTA (e.g. Sign In, Continue).
+ * Accent Button — Gradient Electric Blue branded CTA.
  */
 @Composable
 fun AccentButton(
@@ -212,10 +201,10 @@ fun AccentButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(Radius.pill)
+            .clip(MaterialTheme.shapes.extraLarge)
             .background(
                 Brush.horizontalGradient(
-                    listOf(AccentPrimary, AccentSecondary)
+                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                 )
             )
             .clickable(
@@ -237,7 +226,7 @@ fun AccentButton(
         }
         Text(
             text = label,
-            style = StreamFlowType.buttonLabel,
+            style = MaterialTheme.typography.labelLarge,
             color = Color.White,
             modifier = if (icon != null) Modifier.padding(start = 6.dp) else Modifier
         )

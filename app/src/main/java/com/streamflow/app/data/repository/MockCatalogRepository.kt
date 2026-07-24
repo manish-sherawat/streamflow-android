@@ -212,4 +212,9 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
         }
         return title.hlsManifestPath
     }
+
+    override suspend fun submitReport(titleId: String, titleName: String, issueType: String, details: String): Result<Unit> {
+        delay(300)
+        return Result.success(Unit)
+    }
 }

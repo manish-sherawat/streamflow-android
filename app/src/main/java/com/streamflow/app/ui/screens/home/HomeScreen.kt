@@ -22,12 +22,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
@@ -36,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -90,14 +95,18 @@ fun HomeScreen(
 
     val pullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
 
-    if (pullToRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
+    // Trigger refresh when user pulls down past threshold
+    LaunchedEffect(pullToRefreshState.isRefreshing) {
+        if (pullToRefreshState.isRefreshing) {
             viewModel.refreshHome()
         }
     }
 
+    // Sync ViewModel refreshing state to indicator
     LaunchedEffect(isRefreshing) {
-        if (!isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
             pullToRefreshState.endRefresh()
         }
     }
@@ -224,76 +233,158 @@ private fun HomeContent(
     onToggleWatchlist: (String) -> Unit
 ) {
     val heroTitles = remember(rails) {
-        rails.flatMap { it.titles }.distinctBy { it.id }.take(5)
+        val featuredRail = rails.find { it.id == "featured" || it.title.contains("Featured", ignoreCase = true) }
+        val items = (featuredRail?.titles ?: rails.flatMap { it.titles })
+        items.distinctBy { it.id }.take(5)
     }
 
     var selectedCategory by remember { mutableStateOf("All") }
+    var seeAllRail by remember { mutableStateOf<Rail?>(null) }
     val categories = listOf("All", "Movies", "TV Shows", "Web Series", "Anime", "Trending")
 
-    val filteredRails = remember(selectedCategory, rails) {
-        val activeRails = rails.filterNot {
+    val activeRails = remember(rails) {
+        rails.filterNot {
             it.id == "featured" ||
                     it.title.contains("Featured Highlights", ignoreCase = true) ||
                     it.title.contains("Feature Highlights", ignoreCase = true)
         }
-        if (selectedCategory == "All") activeRails
-        else activeRails.filter { rail ->
-            rail.title.contains(selectedCategory, ignoreCase = true) ||
-                    rail.titles.any { t -> t.genres.any { g -> g.contains(selectedCategory, ignoreCase = true) } }
-        }.ifEmpty { activeRails }
     }
 
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 110.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        // Top Header with status bars safe space
-        item {
-            TopBrandBar()
-        }
+    val categoryTitles = remember(selectedCategory, rails) {
+        if (selectedCategory == "All") emptyList()
+        else {
+            val matchedRails = activeRails.filter { rail ->
+                rail.title.contains(selectedCategory, ignoreCase = true) ||
+                        rail.titles.any { t -> t.genres.any { g -> g.contains(selectedCategory, ignoreCase = true) } }
+            }.ifEmpty { activeRails }
 
-        // Category chips
-        item {
+            matchedRails.flatMap { it.titles }.distinctBy { it.id }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopBrandBar()
             CategoryChipsRow(
                 categories = categories,
                 selectedCategory = selectedCategory,
                 onSelect = { selectedCategory = it }
             )
-        }
 
-        // Redesigned Hero Carousel
-        if (heroTitles.isNotEmpty() && selectedCategory == "All") {
-            item {
-                Spacer(modifier = Modifier.height(Spacing.xs))
-                HeroCarousel(
-                    heroTitles = heroTitles,
-                    watchlistIds = watchlistIds,
-                    onTitleClick = onTitleClick,
-                    onToggleWatchlist = onToggleWatchlist
-                )
-            }
-        }
-
-        // Content Rails (Continue Watching, Web Series, Trending, Popular, Anime World at bottom)
-        items(filteredRails, key = { it.id }, contentType = { "rail" }) { rail ->
-            Spacer(modifier = Modifier.height(Spacing.lg))
-            if (rail.id == "continue-watching") {
-                ContinueWatchingSection(rail = rail, onTitleClick = onTitleClick)
-            } else {
-                val isAnimeRail = rail.id == "anime-universe" || rail.id.contains("anime", ignoreCase = true) || rail.title.contains("anime", ignoreCase = true)
-                if (isAnimeRail) {
-                    AnimeSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = "Anime" })
-                } else {
-                    val targetCategory = when {
-                        rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true) -> "Trending"
-                        rail.id == "bollywood" || rail.title.contains("Bollywood", ignoreCase = true) -> "Movies"
-                        rail.id == "hollywood" || rail.title.contains("Hollywood", ignoreCase = true) -> "Movies"
-                        rail.id == "web-series" || rail.title.contains("Series", ignoreCase = true) -> "TV Shows"
-                        else -> "All"
+            if (selectedCategory == "All") {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 110.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (heroTitles.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(Spacing.xs))
+                            HeroCarousel(
+                                heroTitles = heroTitles,
+                                watchlistIds = watchlistIds,
+                                onTitleClick = onTitleClick,
+                                onToggleWatchlist = onToggleWatchlist
+                            )
+                        }
                     }
-                    RailSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { selectedCategory = targetCategory })
+
+                    items(activeRails, key = { it.id }, contentType = { "rail" }) { rail ->
+                        Spacer(modifier = Modifier.height(Spacing.lg))
+                        if (rail.id == "continue-watching") {
+                            ContinueWatchingSection(rail = rail, onTitleClick = onTitleClick)
+                        } else {
+                            val isAnimeRail = rail.id == "anime-universe" || rail.id.contains("anime", ignoreCase = true) || rail.title.contains("anime", ignoreCase = true)
+                            if (isAnimeRail) {
+                                AnimeSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { seeAllRail = rail })
+                            } else {
+                                RailSection(rail = rail, onTitleClick = onTitleClick, onSeeAllClick = { seeAllRail = rail })
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Category Grid Layout View for Movies, TV Shows, Web Series, Anime, Trending
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(7.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(3.dp, 16.dp)
+                                    .clip(Radius.pill)
+                                    .background(AccentPrimary)
+                            )
+                            Text(
+                                text = selectedCategory.uppercase(),
+                                style = StreamFlowType.sectionHeader.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                color = TextPrimary
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(Radius.chip)
+                                .background(AccentPrimary.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "${categoryTitles.size} Titles",
+                                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                color = AccentPrimary
+                            )
+                        }
+                    }
+
+                    val isTrending = selectedCategory.equals("Trending", ignoreCase = true)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        contentPadding = PaddingValues(
+                            start = Spacing.md,
+                            end = Spacing.md,
+                            bottom = 120.dp,
+                            top = Spacing.xs
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        itemsIndexed(
+                            categoryTitles,
+                            key = { index, title -> "cat_grid_${title.id}_$index" }
+                        ) { index, title ->
+                            PosterCard(
+                                posterUrl = title.posterUrl,
+                                titleLabel = title.name,
+                                ratingLabel = if (title.imdbRating > 0) "${title.imdbRating}" else null,
+                                rankBadge = if (isTrending) index + 1 else null,
+                                onClick = { onTitleClick(title) },
+                                width = 110.dp,
+                                height = 163.dp
+                            )
+                        }
+                    }
                 }
             }
+        }
+
+        seeAllRail?.let { rail ->
+            SeeAllWindowDialog(
+                rail = rail,
+                onTitleClick = onTitleClick,
+                onDismiss = { seeAllRail = null }
+            )
         }
     }
 }
@@ -365,64 +456,47 @@ private fun HeroCarousel(
 
 @Composable
 private fun TopBrandBar() {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .background(com.streamflow.app.ui.theme.BgElevated.copy(alpha = 0.85f))
+            .border(0.5.dp, GlassBorder)
     ) {
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = Spacing.md, vertical = Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(AccentPrimary, Color(0xFFFF3B30))
-                        )
-                    ),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(AccentPrimary, Color(0xFFFF3B30))
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
 
-            Text(
-                text = "STREAMFLOW",
-                style = StreamFlowType.brandTitle,
-                color = TextPrimary
-            )
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-        ) {
-            // VIP premium badge with gradient border
-            Box(
-                modifier = Modifier
-                    .clip(Radius.chip)
-                    .background(Color(0xFF1C1C1C))
-                    .border(1.dp, Brush.horizontalGradient(listOf(AccentStar, Color(0xFFFF9500))), Radius.chip)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
                 Text(
-                    text = "✦ VIP PRO",
-                    style = StreamFlowType.caption.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = AccentStar
+                    text = "STREAMFLOW",
+                    style = StreamFlowType.brandTitle,
+                    color = TextPrimary
                 )
             }
         }
@@ -480,13 +554,32 @@ private fun HeroBanner(
     onToggleWatchlist: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(460.dp)
-            .padding(horizontal = Spacing.lg)
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
+        modifier = Modifier.fillMaxWidth()
     ) {
+        // Ambient Radial Spotlight Glow
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(0.92f)
+                .height(440.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            AccentPrimary.copy(alpha = 0.30f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(460.dp)
+                .padding(horizontal = Spacing.lg)
+                .clip(RoundedCornerShape(20.dp))
+                .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
+        ) {
         // Poster Image (uses posterUrl for consistent branding)
         AsyncImage(
             model = title.posterUrl,
@@ -623,6 +716,7 @@ private fun HeroBanner(
         }
     }
 }
+}
 
 
 
@@ -642,46 +736,58 @@ private fun AnimeSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.md)
+                .padding(top = Spacing.sm)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp, 16.dp)
+                        .size(3.dp, 16.dp)
                         .clip(Radius.pill)
-                        .background(AccentStar) // Electric Golden Yellow
+                        .background(AccentPrimary)
                 )
                 Text(
                     text = "ANIME WORLD ⚡",
                     style = StreamFlowType.sectionHeader.copy(
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
+                        fontSize = 13.sp,
+                        letterSpacing = 0.8.sp
                     ),
                     color = TextPrimary
                 )
             }
-            Text(
-                text = "See all",
-                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
-                color = AccentStar,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(Radius.chip)
                     .clickable { onSeeAllClick() }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+            ) {
+                Text(
+                    text = "See all",
+                    style = StreamFlowType.caption.copy(fontWeight = FontWeight.SemiBold),
+                    color = AccentPrimary
+                )
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    tint = AccentPrimary,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
         }
         Spacer(Modifier.height(Spacing.xs))
         LazyRow(
             contentPadding = PaddingValues(horizontal = Spacing.md),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            items(rail.titles, key = { "anime_${it.id}" }, contentType = { "poster" }) { title ->
+            itemsIndexed(rail.titles, key = { _, title -> "anime_${title.id}" }, contentType = { _, _ -> "poster" }) { _, title ->
                 PosterCard(
                     posterUrl = title.posterUrl,
                     titleLabel = title.name,
-                    ratingLabel = if (title.imdbRating > 0) "★ ${title.imdbRating}" else null,
+                    ratingLabel = if (title.imdbRating > 0) "${title.imdbRating}" else null,
                     onClick = { onTitleClick(title) }
                 )
             }
@@ -893,4 +999,129 @@ private fun ContinueWatchingCard(title: Title, onClick: () -> Unit) {
         }
     }
 }
+
+/**
+ * Full-screen See All Window Dialog rendering section titles in a 3-column Grid Layout (LazyVerticalGrid).
+ */
+@Composable
+private fun SeeAllWindowDialog(
+    rail: Rail,
+    onTitleClick: (Title) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BgBase)
+                .statusBarsPadding()
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Header Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(com.streamflow.app.ui.theme.BgElevated)
+                        .border(1.dp, GlassBorder)
+                        .padding(horizontal = Spacing.md, vertical = Spacing.sm + 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp, 20.dp)
+                                .clip(Radius.pill)
+                                .background(AccentPrimary)
+                        )
+                        Text(
+                            text = rail.title.uppercase(),
+                            style = StreamFlowType.sectionHeader.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(Radius.chip)
+                                .background(AccentPrimary.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "${rail.titles.size} Items",
+                                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                color = AccentPrimary
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(BgCard)
+                            .border(1.dp, GlassBorder, CircleShape)
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Close",
+                            tint = TextPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                // 3-Column Grid Layout for titles
+                val isTrending = rail.id == "trending" || rail.title.contains("Trending", ignoreCase = true)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(
+                        start = Spacing.md,
+                        end = Spacing.md,
+                        bottom = 32.dp,
+                        top = Spacing.xs
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    itemsIndexed(
+                        rail.titles,
+                        key = { index, title -> "${rail.id}_seeall_grid_${title.id}_$index" }
+                    ) { index, title ->
+                        PosterCard(
+                            posterUrl = title.posterUrl,
+                            titleLabel = title.name,
+                            ratingLabel = if (title.imdbRating > 0) "${title.imdbRating}" else null,
+                            rankBadge = if (isTrending) index + 1 else null,
+                            onClick = {
+                                onDismiss()
+                                onTitleClick(title)
+                            },
+                            width = 110.dp,
+                            height = 163.dp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 

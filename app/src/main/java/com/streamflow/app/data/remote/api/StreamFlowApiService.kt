@@ -2,6 +2,8 @@ package com.streamflow.app.data.remote.api
 
 import com.streamflow.app.data.remote.dto.CatalogResponseDto
 import com.streamflow.app.data.remote.dto.RailDto
+import com.streamflow.app.data.remote.dto.ReportRequestDto
+import com.streamflow.app.data.remote.dto.ReportResponseDto
 import com.streamflow.app.data.remote.dto.TitleDto
 import com.streamflow.app.data.remote.dto.WatchlistRequestDto
 import retrofit2.http.Body
@@ -38,4 +40,26 @@ interface StreamFlowApiService {
     suspend fun syncWatchlist(
         @Body request: WatchlistRequestDto
     ): List<TitleDto>
+
+    @POST("v1/reports")
+    suspend fun submitReportV1(
+        @Body request: ReportRequestDto
+    ): ReportResponseDto
+
+    @POST("reports")
+    suspend fun submitReportRoot(
+        @Body request: ReportRequestDto
+    ): ReportResponseDto
+
+    @POST("v1/titles/{id}/report")
+    suspend fun reportTitleV1(
+        @Path("id") titleId: String,
+        @Body request: ReportRequestDto
+    ): ReportResponseDto
+
+    @POST("titles/{id}/report")
+    suspend fun reportTitleRoot(
+        @Path("id") titleId: String,
+        @Body request: ReportRequestDto
+    ): ReportResponseDto
 }

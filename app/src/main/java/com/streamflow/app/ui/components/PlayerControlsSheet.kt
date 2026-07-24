@@ -17,18 +17,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.HighQuality
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.streamflow.app.ui.screens.player.TrackOption
 import com.streamflow.app.ui.screens.player.VideoQualityOption
-import com.streamflow.app.ui.theme.AccentPrimary
 import com.streamflow.app.ui.theme.AccentStar
 import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.BgElevated
@@ -84,9 +79,9 @@ fun PlayerControlsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(Radius.card)
+                .clip(MaterialTheme.shapes.large)
                 .background(BgElevated)
-                .border(1.dp, GlassBorder, Radius.card)
+                .border(1.dp, GlassBorder, MaterialTheme.shapes.large)
                 .padding(Spacing.lg)
         ) {
             // Header Row
@@ -105,16 +100,21 @@ fun PlayerControlsSheet(
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(BgCard)
-                        .clickable(onClick = onDismiss),
+                        .clickable { onDismiss() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = TextSecondary, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(Spacing.md))
 
-            // Navigation Category Tabs
+            // Settings Navigation Tabs (Material 3 Expressive Monochrome)
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
                 modifier = Modifier.fillMaxWidth()
@@ -129,9 +129,9 @@ fun PlayerControlsSheet(
                         ),
                         color = if (isSelected) Color.White else TextSecondary,
                         modifier = Modifier
-                            .clip(Radius.chip)
-                            .background(if (isSelected) AccentPrimary else BgCard)
-                            .border(0.5.dp, if (isSelected) Color.Transparent else GlassBorder, Radius.chip)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(if (isSelected) Color.Black else BgCard)
+                            .border(0.5.dp, if (isSelected) Color.Transparent else GlassBorder, MaterialTheme.shapes.small)
                             .clickable { activeTab = tab }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
@@ -184,9 +184,9 @@ fun PlayerControlsSheet(
                                         style = StreamFlowType.pillLabel,
                                         color = if (isSelected) Color.White else TextPrimary,
                                         modifier = Modifier
-                                            .clip(Radius.pill)
-                                            .background(if (isSelected) AccentPrimary else BgCard)
-                                            .border(1.dp, if (isSelected) AccentPrimary else GlassBorder, Radius.pill)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(if (isSelected) Color.Black else BgCard)
+                                            .border(1.dp, if (isSelected) Color.Black else GlassBorder, MaterialTheme.shapes.small)
                                             .clickable { onSelectSpeed(speed) }
                                             .padding(horizontal = 14.dp, vertical = 8.dp)
                                     )
@@ -232,8 +232,8 @@ fun PlayerControlsSheet(
                                         style = StreamFlowType.pillLabel,
                                         color = if (isSelected) Color.White else TextPrimary,
                                         modifier = Modifier
-                                            .clip(Radius.pill)
-                                            .background(if (isSelected) AccentPrimary else BgCard)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(if (isSelected) Color.Black else BgCard)
                                             .clickable { selectedEqPreset = preset }
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
                                     )
@@ -278,8 +278,8 @@ fun PlayerControlsSheet(
                                         style = StreamFlowType.pillLabel,
                                         color = if (isSelected) Color.White else TextPrimary,
                                         modifier = Modifier
-                                            .clip(Radius.pill)
-                                            .background(if (isSelected) AccentPrimary else BgCard)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(if (isSelected) Color.Black else BgCard)
                                             .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(fontSizeSp = spVal)) }
                                             .padding(horizontal = 14.dp, vertical = 6.dp)
                                     )
@@ -306,10 +306,34 @@ fun PlayerControlsSheet(
                                         style = StreamFlowType.pillLabel,
                                         color = if (isSelected) Color.White else TextPrimary,
                                         modifier = Modifier
-                                            .clip(Radius.pill)
-                                            .background(if (isSelected) AccentPrimary else BgCard)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(if (isSelected) Color.Black else BgCard)
                                             .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(textColorArgb = colorVal)) }
                                             .padding(horizontal = 14.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(Spacing.md))
+                            Text(
+                                text = "SUBTITLE SYNC DELAY (CALIBRATION)",
+                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                                color = TextSecondary
+                            )
+                            Spacer(Modifier.height(Spacing.xs))
+                            var subtitleDelaySec by remember { mutableStateOf(0.0f) }
+                            val delays = listOf(-2.0f, -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 2.0f)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                                items(delays) { sec ->
+                                    val isSelected = sec == subtitleDelaySec
+                                    Text(
+                                        text = if (sec == 0f) "Sync (0s)" else if (sec > 0) "+${sec}s" else "${sec}s",
+                                        style = StreamFlowType.pillLabel,
+                                        color = if (isSelected) Color.White else TextPrimary,
+                                        modifier = Modifier
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(if (isSelected) Color.Black else BgCard)
+                                            .clickable { subtitleDelaySec = sec }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
                                     )
                                 }
                             }
@@ -334,9 +358,9 @@ private fun QualityOptionRow(quality: VideoQualityOption, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .clip(Radius.card)
-            .background(if (quality.isSelected) AccentPrimary.copy(alpha = 0.15f) else BgCard)
-            .border(1.dp, if (quality.isSelected) AccentPrimary else Color.Transparent, Radius.card)
+            .clip(MaterialTheme.shapes.small)
+            .background(if (quality.isSelected) Color.Black.copy(alpha = 0.08f) else BgCard)
+            .border(1.dp, if (quality.isSelected) TextPrimary else Color.Transparent, MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
             .padding(horizontal = Spacing.md, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -346,7 +370,7 @@ private fun QualityOptionRow(quality: VideoQualityOption, onClick: () -> Unit) {
             Text(
                 text = quality.label,
                 style = StreamFlowType.body.copy(fontWeight = if (quality.isSelected) FontWeight.Bold else FontWeight.Normal),
-                color = if (quality.isSelected) AccentPrimary else TextPrimary
+                color = TextPrimary
             )
             if (quality.is4K) {
                 Spacer(Modifier.width(8.dp))
@@ -365,7 +389,7 @@ private fun QualityOptionRow(quality: VideoQualityOption, onClick: () -> Unit) {
             }
         }
         if (quality.isSelected) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -376,9 +400,9 @@ private fun TrackOptionRow(trackName: String, isSelected: Boolean, onClick: () -
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .clip(Radius.card)
-            .background(if (isSelected) AccentPrimary.copy(alpha = 0.15f) else BgCard)
-            .border(1.dp, if (isSelected) AccentPrimary else Color.Transparent, Radius.card)
+            .clip(MaterialTheme.shapes.small)
+            .background(if (isSelected) Color.Black.copy(alpha = 0.08f) else BgCard)
+            .border(1.dp, if (isSelected) TextPrimary else Color.Transparent, MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
             .padding(horizontal = Spacing.md, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -387,10 +411,10 @@ private fun TrackOptionRow(trackName: String, isSelected: Boolean, onClick: () -
         Text(
             text = trackName,
             style = StreamFlowType.body.copy(fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal),
-            color = if (isSelected) AccentPrimary else TextPrimary
+            color = TextPrimary
         )
         if (isSelected) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = AccentPrimary, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
         }
     }
 }

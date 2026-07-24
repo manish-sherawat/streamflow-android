@@ -289,4 +289,16 @@ class FirestoreCatalogRepository @Inject constructor() : CatalogRepository {
         return title?.hlsManifestPath?.takeIf { it.isNotBlank() }
             ?: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
     }
+
+    override suspend fun submitReport(titleId: String, titleName: String, issueType: String, details: String): Result<Unit> = runCatching {
+        val report = mapOf(
+            "titleId" to titleId,
+            "titleName" to titleName,
+            "issueType" to issueType,
+            "details" to details,
+            "timestamp" to System.currentTimeMillis()
+        )
+        firestore?.collection("reports")?.add(report)?.await()
+        Unit
+    }
 }

@@ -57,6 +57,10 @@ fun WatchlistScreen(
 ) {
     val titles by viewModel.watchlist.collectAsState()
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

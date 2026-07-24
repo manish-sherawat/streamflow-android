@@ -2,43 +2,74 @@ package com.streamflow.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─── StreamFlow High-Contrast Palette (Black, Red, Yellow, White) ─────────────
-// Philosophy: True deep black background, cinematic red accent, golden yellow ratings/badges, crisp white text.
-// 0% purple or blue tints.
+/**
+ * StreamFlow — Material 3 Expressive Light Color System (NO RED, Pure Light Theme).
+ */
 
-// Backgrounds — pure dark layers
-val BgBase      = Color(0xFF0A0A0A)   // Pure deep pitch black
-val BgCard      = Color(0xFF141414)   // Card surface
-val BgElevated  = Color(0xFF1E1E1E)   // Elevated sheets / bottom nav / dialogs
-val BgSurface   = Color(0xFF222222)   // Mid-level surface (chips, headers)
-val BgInput     = Color(0xFF181818)   // Input field fill
+/** Brand Seed — Electric Blue / Vibrant Azure (NO RED) */
+val StreamFlowSeed = Color(0xFF2563EB)
 
-// kept for compat
+// ---- Pure Light Theme Color Scheme Tokens ----
+val md_theme_light_background = Color(0xFFF8FAFC)
+val md_theme_light_surface = Color(0xFFFFFFFF)
+val md_theme_light_surfaceDim = Color(0xFFE2E8F0)
+val md_theme_light_surfaceBright = Color(0xFFFFFFFF)
+val md_theme_light_surfaceContainerLowest = Color(0xFFFFFFFF)
+val md_theme_light_surfaceContainerLow = Color(0xFFF1F5F9)
+val md_theme_light_surfaceContainer = Color(0xFFE2E8F0)
+val md_theme_light_surfaceContainerHigh = Color(0xFFCBD5E1)
+val md_theme_light_surfaceContainerHighest = Color(0xFF94A3B8)
+
+val md_theme_light_onSurface = Color(0xFF0F172A)
+val md_theme_light_onSurfaceVariant = Color(0xFF334155)
+val md_theme_light_outline = Color(0xFF94A3B8)
+val md_theme_light_outlineVariant = Color(0xFFE2E8F0)
+
+val md_theme_light_primary = Color(0xFF2563EB)
+val md_theme_light_onPrimary = Color(0xFFFFFFFF)
+val md_theme_light_primaryContainer = Color(0xFFDBEAFE)
+val md_theme_light_onPrimaryContainer = Color(0xFF1E40AF)
+
+val md_theme_light_secondary = Color(0xFF3B82F6)
+val md_theme_light_onSecondary = Color(0xFFFFFFFF)
+val md_theme_light_secondaryContainer = Color(0xFFEFF6FF)
+val md_theme_light_onSecondaryContainer = Color(0xFF1D4ED8)
+
+val md_theme_light_tertiary = Color(0xFFD97706)
+val md_theme_light_onTertiary = Color(0xFFFFFFFF)
+val md_theme_light_tertiaryContainer = Color(0xFFFEF3C7)
+val md_theme_light_onTertiaryContainer = Color(0xFF92400E)
+
+val md_theme_light_error = Color(0xFFDC2626)
+val md_theme_light_onError = Color(0xFFFFFFFF)
+val md_theme_light_errorContainer = Color(0xFFFEE2E2)
+val md_theme_light_onErrorContainer = Color(0xFF991B1B)
+
+// ---- Legacy Compatibility Tokens (Remapped to Pure Light Theme) ----
+val BgBase = md_theme_light_background
+val BgCard = md_theme_light_surfaceContainerLow
+val BgElevated = md_theme_light_surface
+val BgSurface = md_theme_light_surfaceContainer
+val BgInput = md_theme_light_surfaceContainerLow
 val BgGradientTop = BgBase
 
-// Text hierarchy — pure high contrast
-val TextPrimary   = Color(0xFFFFFFFF) // Crisp pure white
-val TextSecondary = Color(0xFFA0A0A0) // Clean light gray
-val TextTertiary  = Color(0xFF666666) // Muted hint text
-val TextMuted     = Color(0xFF444444) // Inactive icon gray
+val TextPrimary = md_theme_light_onSurface
+val TextSecondary = md_theme_light_onSurfaceVariant
+val TextTertiary = md_theme_light_outline
+val TextMuted = Color(0xFF64748B)
 
-// Accent system — Cinematic Red & Golden Yellow
-val AccentPrimary   = Color(0xFFE50914) // Vibrant cinematic red
-val AccentSecondary = Color(0xFFFF3B30) // Bright secondary red
-val AccentFocus     = Color(0xFFE50914) // compat alias
-val AccentMagenta   = Color(0xFFE50914) // compat alias → red
-val AccentStar      = Color(0xFFFFCC00) // Electric golden yellow — ratings & badges
-val AccentCream     = Color(0xFFFFFFFF) // compat alias → TextPrimary
-val AccentGlow      = Color(0x33E50914) // Transparent red glow
+val AccentPrimary = StreamFlowSeed
+val AccentSecondary = md_theme_light_secondary
+val AccentFocus = StreamFlowSeed
+val AccentMagenta = StreamFlowSeed
+val AccentStar = md_theme_light_tertiary
+val AccentCream = TextPrimary
+val AccentGlow = Color(0x202563EB)
 
-// Dividers & borders — subtle dark gray
-val Divider        = Color(0xFF222222)  // Hairline separator
-val GlassBorder    = Color(0xFF2A2A2A)  // Subtle card outline
-val GlassHighlight = Color(0xFF2A2A2A)  // compat alias
+val Divider = md_theme_light_outlineVariant
+val GlassBorder = md_theme_light_outlineVariant
+val GlassHighlight = md_theme_light_outlineVariant
 
-// Chip / Pill surfaces
-val PillBg     = Color(0xFF1F1F1F)     // Filled dark chip background
-val PillBorder = Color(0xFF2A2A2A)     // Chip border
-
-// Glass fill (kept for compat)
-val GlassFill = Color(0xCC141414.toInt()) // 80% opaque card bg
+val PillBg = md_theme_light_surfaceContainerLow
+val PillBorder = md_theme_light_outlineVariant
+val GlassFill = Color(0xFDF8FAFC)

@@ -67,8 +67,20 @@ import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 import com.streamflow.app.ui.theme.StreamFlowType
 import com.streamflow.app.ui.theme.TextPrimary
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.LaunchedEffect
+import com.streamflow.app.ui.components.ReportIssueDialog
+import com.streamflow.app.ui.theme.AccentPrimary
+import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleDetailScreen(
     onBack: () -> Unit,
@@ -77,8 +89,43 @@ fun TitleDetailScreen(
     viewModel: TitleDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isReporting by viewModel.isReporting.collectAsState()
+    val reportMessage by viewModel.reportMessage.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(BgBase)) {
+    var showReportDialog by remember { mutableStateOf(false) }
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    // Trigger refresh when user pulls down past threshold
+    LaunchedEffect(pullToRefreshState.isRefreshing) {
+        if (pullToRefreshState.isRefreshing) {
+            viewModel.refresh()
+        }
+    }
+
+    // Sync ViewModel refreshing state to indicator
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    LaunchedEffect(reportMessage) {
+        if (reportMessage != null) {
+            delay(3000)
+            viewModel.dismissReportMessage()
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BgBase)
+            .nestedScroll(pullToRefreshState.nestedScrollConnection)
+    ) {
         when (val state = uiState) {
             is TitleDetailUiState.Loading ->
                 DetailShimmerSkeleton()
@@ -95,9 +142,51 @@ fun TitleDetailScreen(
                     onBack = onBack,
                     onPlay = onPlay,
                     onToggleWatchlist = viewModel::toggleWatchlist,
+                    onReportClick = { showReportDialog = true },
                     onTitleClick = onTitleClick
                 )
         }
+
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter),
+            containerColor = BgCard,
+            contentColor = AccentPrimary
+        )
+
+        // Report Toast Notification
+        reportMessage?.let { msg ->
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .background(Color.Black.copy(alpha = 0.90f))
+                    .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraLarge)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = msg,
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+
+    if (showReportDialog && uiState is TitleDetailUiState.Success) {
+        val title = (uiState as TitleDetailUiState.Success).title
+        ReportIssueDialog(
+            titleName = title.name,
+            isSubmitting = isReporting,
+            onSubmit = { issueType, details ->
+                viewModel.submitReport(issueType, details)
+                showReportDialog = false
+            },
+            onDismiss = { showReportDialog = false }
+        )
     }
 }
 
@@ -107,6 +196,7 @@ private fun DetailContent(
     onBack: () -> Unit,
     onPlay: (titleId: String, episodeId: String?) -> Unit,
     onToggleWatchlist: () -> Unit,
+    onReportClick: () -> Unit,
     onTitleClick: (Title) -> Unit
 ) {
     val title = state.title
@@ -158,7 +248,7 @@ private fun DetailContent(
 
                 // Action row
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -166,13 +256,39 @@ private fun DetailContent(
                         label = "Play Now",
                         icon = Icons.Filled.PlayArrow,
                         onClick = { onPlay(title.id, title.episodes.firstOrNull()?.id) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1.2f)
                     )
                     SecondaryButton(
                         label = if (state.isInWatchlist) "Saved" else "My List",
                         icon = if (state.isInWatchlist) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                        onClick = onToggleWatchlist
+                        onClick = onToggleWatchlist,
+                        modifier = Modifier.weight(0.9f)
                     )
+                    Box(
+                        modifier = Modifier
+                            .height(46.dp)
+                            .clip(MaterialTheme.shapes.extraLarge)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraLarge)
+                            .clickable(onClick = onReportClick)
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Flag,
+                                contentDescription = "Report Issue",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "Report",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = TextPrimary
+                            )
+                        }
+                    }
                 }
                 Spacer(Modifier.height(Spacing.md))
 

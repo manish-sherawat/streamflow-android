@@ -1,7 +1,6 @@
 package com.streamflow.app.navigation
 
 sealed class Destination(val route: String) {
-    data object Auth : Destination("auth")
     data object Home : Destination("home")
     data object Search : Destination("search")
     data object Watchlist : Destination("watchlist")
@@ -17,7 +16,7 @@ sealed class Destination(val route: String) {
     }
 }
 
-// Tabs shown in the FloatingBottomNav — order matters, matches reference UI icon order.
+// Tabs shown in the FloatingBottomNav
 val bottomNavDestinations = listOf(
     Destination.Home,
     Destination.Search,

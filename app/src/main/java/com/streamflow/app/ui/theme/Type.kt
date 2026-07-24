@@ -6,99 +6,76 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// System font until bundled Inter is added.
-// All text color is set at the call-site; no color baked into styles here.
-private val Base = FontFamily.Default
+/** System variable font family fallback */
+val RobotoFlex = FontFamily.Default
+
+/**
+ * StreamFlow — Expressive type scale.
+ * Mirrors design.md §2. Emphasized display/headline/label steps carry the heavier
+ * weight the Expressive scale defines for hero titles and primary CTAs; everything
+ * else stays on standard weights for scan-ability in dense rails.
+ */
+val StreamFlowTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp,
+        lineHeight = 42.sp,
+        letterSpacing = 0.sp,
+    ),
+    headlineMedium = TextStyle( // section headers: "Actors", "More Like This"
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 30.sp,
+    ),
+    titleLarge = TextStyle( // card titles / cast names
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+    ),
+    titleMedium = TextStyle( // pill text: IMDb 7.1, 4K HDR
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+    ),
+    bodyLarge = TextStyle( // synopsis
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+    ),
+    labelLarge = TextStyle( // button labels
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp,
+    ),
+    labelSmall = TextStyle( // captions: "S1:E1", durations
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+    ),
+)
+
+// Material3 bridge and component compatibility object
+val StreamFlowMaterialType = StreamFlowTypography
 
 object StreamFlowType {
-    // Display & hero titles — large, confident, sentence-case
-    val displayTitle = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Bold,
-        fontSize    = 26.sp,
-        lineHeight  = 32.sp,
-        letterSpacing = (-0.3).sp
-    )
+    val displayTitle = StreamFlowTypography.displayLarge
+    val sectionHeader = StreamFlowTypography.headlineMedium
+    val cardTitle = StreamFlowTypography.titleLarge
+    val body = StreamFlowTypography.bodyLarge
+    val pillLabel = StreamFlowTypography.titleMedium
+    val caption = StreamFlowTypography.labelSmall
+    val buttonLabel = StreamFlowTypography.labelLarge
+    val brandTitle = StreamFlowTypography.displayLarge.copy(fontSize = 19.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
 
-    // Section rail headers
-    val sectionHeader = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.SemiBold,
-        fontSize    = 16.sp,
-        lineHeight  = 22.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Card thumbnail title
-    val cardTitle = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Medium,
-        fontSize    = 12.sp,
-        lineHeight  = 16.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Body copy
-    val body = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Normal,
-        fontSize    = 14.sp,
-        lineHeight  = 21.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Chip / pill label
-    val pillLabel = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Medium,
-        fontSize    = 12.sp,
-        lineHeight  = 16.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Caption / metadata
-    val caption = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Normal,
-        fontSize    = 11.sp,
-        lineHeight  = 15.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Button label
-    val buttonLabel = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.SemiBold,
-        fontSize    = 15.sp,
-        lineHeight  = 20.sp,
-        letterSpacing = 0.sp
-    )
-
-    // Wordmark / brand
-    val brandTitle = TextStyle(
-        fontFamily  = Base,
-        fontWeight  = FontWeight.Black,
-        fontSize    = 18.sp,
-        lineHeight  = 22.sp,
-        letterSpacing = 2.sp
-    )
-
-    // Aliases for backward compat
-    val heroTitle     = displayTitle
-    val sheetHeader   = sectionHeader
-    val titleHeader   = sectionHeader
+    val heroTitle = displayTitle
+    val sheetHeader = sectionHeader
+    val titleHeader = sectionHeader
 }
-
-// Material3 typography bridge
-val StreamFlowMaterialType = Typography(
-    displayMedium  = StreamFlowType.displayTitle,
-    headlineMedium = StreamFlowType.displayTitle,
-    titleLarge     = StreamFlowType.sectionHeader,
-    titleMedium    = StreamFlowType.sectionHeader,
-    titleSmall     = StreamFlowType.cardTitle,
-    bodyLarge      = StreamFlowType.body,
-    bodyMedium     = StreamFlowType.body,
-    labelLarge     = StreamFlowType.buttonLabel,
-    labelMedium    = StreamFlowType.pillLabel,
-    labelSmall     = StreamFlowType.caption
-)

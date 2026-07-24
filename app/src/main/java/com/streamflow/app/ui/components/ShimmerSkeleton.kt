@@ -30,10 +30,10 @@ import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 
-// Metallic dark-silver shimmer: multi-stop metallic sweep gradient
-private val shimmerBase      = Color(0xFF14171E)
-private val shimmerMid       = Color(0xFF2E3442)
-private val shimmerHighlight = Color(0xFF566075)
+// Modern light theme silver-white metallic shimmer gradient
+private val shimmerBase      = Color(0xFFE2E8F0)
+private val shimmerMid       = Color(0xFFF1F5F9)
+private val shimmerHighlight = Color(0xFFFFFFFF)
 
 @Composable
 fun ShimmerBrush(

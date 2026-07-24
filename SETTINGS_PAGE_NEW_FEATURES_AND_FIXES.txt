@@ -1,0 +1,77 @@
+================================================================================
+  STREAMFLOW ANDROID — SETTINGS & PROFILE PAGE: NEW FEATURES & FIXES PROPOSAL
+================================================================================
+
+1. EXECUTIVE OVERVIEW
+--------------------------------------------------------------------------------
+The Settings & Profile page serves as the control center for streaming performance,
+video playback preferences, offline downloads, security, and account management.
+
+Below is a detailed breakdown of high-value new features and essential fixes 
+designed to elevate StreamFlow to a premium streaming platform (Netflix / Prime level).
+
+
+2. RECOMMENDED NEW FEATURES FOR SETTINGS
+--------------------------------------------------------------------------------
+[ ] 1. DEFAULT PLAYBACK & STREAMING QUALITY SELECTOR
+    - Add a selector for preferred streaming quality:
+      • Auto (Adaptive Bitrate) [Default]
+      • 4K Ultra HD (High Bandwidth)
+      • 1080p Full HD
+      • 720p HD
+      • Data Saver (480p - 1.5 Mbps cap)
+    - Subtitle & Audio Default Language: Set default audio track (Original, English Dub, 
+      Hindi Dub) and subtitle preference (Off, English, Hindi).
+
+[ ] 2. SMART DOWNLOADS & WI-FI PREFERENCES
+    - Download Over Wi-Fi Only: Toggle switch to prevent accidental cellular data usage.
+    - Download Video Quality: High (1080p), Medium (720p), Low (480p).
+    - Smart Downloads Toggle: Automatically delete watched episodes and download 
+      the next episode in a series.
+
+[ ] 3. CACHE & STORAGE MANAGEMENT
+    - Cache Size Counter: Displays cached image/media memory size (e.g., "142 MB").
+    - One-Tap "Clear Cache" Button: Wipes temporary image/coil cache without deleting 
+      saved offline video downloads.
+    - Visual Storage Meter: Progress bar showing App Storage vs Offline Downloads 
+      vs Free Device Space.
+
+[ ] 4. PARENTAL CONTROLS & PROFILE SECURITY
+    - Maturity Rating Filter: Set content rating limits (All Ages, PG-13, TV-MA 18+).
+    - Profile PIN Lock: 4-digit security PIN for primary/adult profiles.
+
+[ ] 5. APPEARANCE & ACCENT COLOR CUSTOMIZATION
+    - Dark Theme Customizer: Choose between Midnight Slate (`#0F172A`) or OLED Pure 
+      Black (`#000000`) for AMOLED screens.
+    - App Accent Theme: Electric Azure Blue [Default], Golden Yellow, Emerald Green.
+
+[ ] 6. ACCOUNT & WATCH HISTORY CONTROL
+    - Manage Devices: View logged-in devices and sign out unrecognized sessions.
+    - Clear Watch History: Reset "Continue Watching" rail with confirmation dialog.
+
+
+3. KEY FIXES & UI POLISH FOR SETTINGS PAGE
+--------------------------------------------------------------------------------
+[x] 1. Switch Toggle Color Accent Fix:
+       Update `Data Saver` switch colors in `ProfileScreen.kt` to use `AccentPrimary` 
+       (Electric Blue `#2563EB`) for `checkedTrackColor` to match the brand design system.
+
+[x] 2. Profile Selection Modal Contrast Fix:
+       Enhance active profile checkmark indicator and container border styling in 
+       `ProfileSelectionDialog.kt`.
+
+[x] 3. Downloads Section Poster Layout Fix:
+       Fix poster card width/height aspect ratio in the offline downloads horizontal rail 
+       and add smooth trash delete confirmation.
+
+[x] 4. Update Check Instant Feedback:
+       Display explicit toast/dialog notification when "Check for App Updates" 
+       finishes checking for latest releases on GitHub.
+
+
+4. SUMMARY OF RECOMMENDED IMPLEMENTATION STAGES
+--------------------------------------------------------------------------------
+• Phase 1 (Immediate Fixes): Switch accent colors, update check toast, cache counter.
+• Phase 2 (Playback & Downloads): Default quality selector, Wi-Fi only downloads.
+• Phase 3 (Security & Theme): Profile PIN lock, OLED dark theme toggle.
+================================================================================

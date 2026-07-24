@@ -8,12 +8,14 @@ import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.streamflow.app.data.repository.AuthRepository
@@ -53,6 +55,8 @@ data class SubtitleStyleConfig(
 data class PlayerUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
+    val titleName: String = "",
+    val episodeName: String = "",
     val playbackSpeed: Float = 1.0f,
     val audioTracks: List<TrackOption> = emptyList(),
     val subtitleTracks: List<TrackOption> = emptyList(),
@@ -83,7 +87,11 @@ class PlayerViewModel @Inject constructor(
         .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
         .build()
 
-    val player: ExoPlayer = ExoPlayer.Builder(application)
+    private val renderersFactory = DefaultRenderersFactory(application)
+        .setEnableDecoderFallback(true)
+        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+
+    val player: ExoPlayer = ExoPlayer.Builder(application, renderersFactory)
         .setTrackSelector(trackSelector)
         .setAudioAttributes(audioAttributes, true)
         .setLoadControl(
@@ -96,6 +104,14 @@ class PlayerViewModel @Inject constructor(
     private val playerListener = object : Player.Listener {
         override fun onTracksChanged(tracks: Tracks) {
             updateTracksFromPlayer(tracks)
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            android.util.Log.e("ExoPlayerError", "Error playing movie: ${error.errorCodeName} - ${error.message}", error)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                errorMessage = "Playback Error (${error.errorCodeName}): ${error.localizedMessage ?: "Decoder failure"}"
+            )
         }
     }
 
@@ -146,18 +162,28 @@ class PlayerViewModel @Inject constructor(
                 } else null
             } else null
 
+            val epDetail = if (titleDetails != null && episodeId != null) {
+                val ep = titleDetails.episodes.find { it.id == episodeId }
+                if (ep != null) "S${ep.seasonNumber}:E${ep.episodeNumber} • ${ep.title}" else ""
+            } else ""
+
             runCatching {
                 repository.getPlaybackUrl(titleId, episodeId)
             }.onSuccess { url ->
-                val mediaItem = MediaItem.Builder()
-                    .setUri(url)
-                    .setMimeType(MimeTypes.APPLICATION_M3U8)
-                    .build()
+                val builder = MediaItem.Builder().setUri(url)
+                if (url.contains(".m3u8", ignoreCase = true) || url.contains("hls", ignoreCase = true)) {
+                    builder.setMimeType(MimeTypes.APPLICATION_M3U8)
+                }
+                val mediaItem = builder.build()
+                player.stop()
+                player.clearMediaItems()
                 player.setMediaItem(mediaItem)
                 player.prepare()
                 player.playWhenReady = true
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    titleName = titleDetails?.name ?: "",
+                    episodeName = epDetail,
                     availableVideoQualities = qualities,
                     nextEpisode = nextEp
                 )
@@ -334,10 +360,11 @@ class PlayerViewModel @Inject constructor(
             runCatching {
                 repository.getPlaybackUrl(titleId, nextEp.id)
             }.onSuccess { url ->
-                val mediaItem = MediaItem.Builder()
-                    .setUri(url)
-                    .setMimeType(MimeTypes.APPLICATION_M3U8)
-                    .build()
+                val builder = MediaItem.Builder().setUri(url)
+                if (url.contains(".m3u8", ignoreCase = true) || url.contains("hls", ignoreCase = true)) {
+                    builder.setMimeType(MimeTypes.APPLICATION_M3U8)
+                }
+                val mediaItem = builder.build()
                 player.setMediaItem(mediaItem)
                 player.prepare()
                 player.playWhenReady = true
@@ -449,6 +476,8 @@ class PlayerViewModel @Inject constructor(
 
     override fun onCleared() {
         syncProgress()
+        player.stop()
+        player.clearMediaItems()
         player.removeListener(playerListener)
         player.release()
         super.onCleared()

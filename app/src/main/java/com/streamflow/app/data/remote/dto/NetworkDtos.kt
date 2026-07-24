@@ -65,13 +65,13 @@ data class StreamLinkDto(
 
 @Serializable
 data class TitleDto(
-    @SerialName("id") val id: String,
-    @SerialName("name") val name: String,
+    @SerialName("id") val id: String = "",
+    @SerialName("name") val name: String = "",
     @SerialName("type") val type: String = "MOVIE", // MOVIE or SERIES
     @SerialName("synopsis") val synopsis: String = "",
     @SerialName("poster_url") val posterUrl: String = "",
     @SerialName("backdrop_url") val backdropUrl: String = "",
-    @SerialName("imdb_rating") val imdbRating: Double = 0.0,
+    @SerialName("imdb_rating") val imdbRating: Double? = 0.0,
     @SerialName("release_year") val releaseYear: Int = 2024,
     @SerialName("genres") val genres: List<String> = emptyList(),
     @SerialName("cast") val cast: List<CastMemberDto> = emptyList(),
@@ -94,7 +94,7 @@ data class TitleDto(
             synopsis = synopsis,
             posterUrl = posterUrl,
             backdropUrl = backdropUrl,
-            imdbRating = imdbRating,
+            imdbRating = imdbRating ?: 0.0,
             releaseYear = releaseYear,
             genres = genres,
             cast = cast.map { it.toDomain() },
@@ -131,4 +131,28 @@ data class CatalogResponseDto(
 data class WatchlistRequestDto(
     @SerialName("title_id") val titleId: String,
     @SerialName("action") val action: String // "add" or "remove"
+)
+
+@Serializable
+data class ReportRequestDto(
+    @SerialName("titleId") val titleId: String = "",
+    @SerialName("title_id") val altTitleId: String = "",
+    @SerialName("titleName") val titleName: String = "",
+    @SerialName("title_name") val altTitleName: String = "",
+    @SerialName("title") val altTitle: String = "",
+    @SerialName("issueType") val issueType: String = "",
+    @SerialName("issue_type") val altIssueType: String = "",
+    @SerialName("reason") val reason: String = "",
+    @SerialName("type") val type: String = "",
+    @SerialName("details") val details: String = "",
+    @SerialName("message") val message: String = "",
+    @SerialName("description") val description: String = "",
+    @SerialName("status") val status: String = "open",
+    @SerialName("device_info") val deviceInfo: String = "Android App"
+)
+
+@Serializable
+data class ReportResponseDto(
+    @SerialName("success") val success: Boolean = true,
+    @SerialName("message") val message: String = "Report submitted successfully"
 )

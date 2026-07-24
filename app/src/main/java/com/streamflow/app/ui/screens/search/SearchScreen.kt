@@ -208,7 +208,7 @@ fun SearchScreen(
         }
 
         // ── Recent Searches (Shown when query is empty) ─────────────────────
-        var recentSearches by remember { mutableStateOf(listOf("Solo Leveling", "Dog Man", "Cyberpunk", "Hot Ivy")) }
+        var recentSearches by remember { mutableStateOf(listOf("The Gentlemen", "Elite Force", "Disclosure Day", "Drishyam 3")) }
 
         if (uiState.query.isEmpty() && recentSearches.isNotEmpty()) {
             Spacer(modifier = Modifier.height(Spacing.xs))

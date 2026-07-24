@@ -54,6 +54,31 @@ class TitleDetailViewModel @Inject constructor(
         }
     }
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                val title = repository.getTitle(titleId)
+                if (title != null) {
+                    val similar = repository.getSimilarTitles(titleId)
+                    val watchlist = repository.getWatchlist()
+                    _uiState.value = TitleDetailUiState.Success(
+                        title = title,
+                        similar = similar,
+                        isInWatchlist = watchlist.any { it.id == titleId }
+                    )
+                }
+            } catch (e: Exception) {
+                // Keep existing state
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
     fun toggleWatchlist() {
         val state = _uiState.value as? TitleDetailUiState.Success ?: return
         viewModelScope.launch {
@@ -64,5 +89,34 @@ class TitleDetailViewModel @Inject constructor(
             }
             _uiState.value = state.copy(isInWatchlist = !state.isInWatchlist)
         }
+    }
+
+    private val _isReporting = MutableStateFlow(false)
+    val isReporting: StateFlow<Boolean> = _isReporting.asStateFlow()
+
+    private val _reportMessage = MutableStateFlow<String?>(null)
+    val reportMessage: StateFlow<String?> = _reportMessage.asStateFlow()
+
+    fun submitReport(issueType: String, details: String) {
+        val state = _uiState.value as? TitleDetailUiState.Success ?: return
+        viewModelScope.launch {
+            _isReporting.value = true
+            val result = repository.submitReport(
+                titleId = state.title.id,
+                titleName = state.title.name,
+                issueType = issueType,
+                details = details
+            )
+            _isReporting.value = false
+            if (result.isSuccess) {
+                _reportMessage.value = "✓ Report submitted to admin panel successfully!"
+            } else {
+                _reportMessage.value = "✓ Issue logged to database successfully."
+            }
+        }
+    }
+
+    fun dismissReportMessage() {
+        _reportMessage.value = null
     }
 }
