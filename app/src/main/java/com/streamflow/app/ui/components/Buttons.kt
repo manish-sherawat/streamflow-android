@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,17 +30,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+// ── Premium AMOLED Button Colours ─────────────────────────────────────────────
+// Primary gradient: deep space blue → electric blue
+private val PrimaryGradientStart = Color(0xFF1A4FCC)
+private val PrimaryGradientEnd   = Color(0xFF5B9BFF)
+private val PrimaryGlow          = Color(0x405B9BFF)
+
+// Secondary surface: pure black glass
+private val SecondaryBg          = Color(0xFF0D0D0D)
+private val SecondaryBorder      = Color(0xFF2A2A2A)
+private val SecondaryBorderSaved = Color(0xFF5B9BFF)
+
 /**
- * StreamFlow Material 3 Expressive Primary CTA Button.
- * Ultra-crisp Electric Blue pill button with white play icon & bold text.
+ * Premium Primary CTA Button — AMOLED Edition.
+ *
+ * Features:
+ * - Deep blue → electric blue gradient fill (never flat, never cheap)
+ * - Subtle top-edge highlight line (glass shimmer effect)
+ * - Blue glow drop-shadow on press
+ * - Spring scale press feedback + haptic
  */
 @Composable
 fun PrimaryButton(
@@ -50,51 +69,103 @@ fun PrimaryButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
-        label = "primaryButtonScale"
-    )
     val haptic = LocalHapticFeedback.current
 
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 550f),
+        label = "primaryScale"
+    )
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (pressed) 0.7f else 0.0f,
+        animationSpec = tween(180),
+        label = "primaryGlow"
+    )
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(46.dp)
+            .height(48.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
+            // Blue glow shadow on press
+            .shadow(
+                elevation = if (pressed) 12.dp else 0.dp,
+                shape = MaterialTheme.shapes.extraLarge,
+                ambientColor = PrimaryGlow,
+                spotColor = PrimaryGlow
+            )
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.primary)
+            // Deep blue → electric blue gradient
+            .background(
+                Brush.linearGradient(
+                    colorStops = arrayOf(
+                        0.0f to PrimaryGradientStart,
+                        0.55f to Color(0xFF3A76E8),
+                        1.0f to PrimaryGradientEnd
+                    )
+                )
+            )
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Color.White.copy(alpha = 0.25f)),
+                indication = rememberRipple(color = Color.White.copy(alpha = 0.18f)),
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
                 }
             )
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(19.dp)
+        // Top-edge glass highlight shimmer
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.22f),
+                            Color.White.copy(alpha = 0.22f),
+                            Color.Transparent
+                        )
+                    )
+                )
         )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = Color.White,
-            modifier = Modifier.padding(start = 6.dp)
-        )
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(19.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 7.dp)
+            )
+        }
     }
 }
 
 /**
- * StreamFlow Secondary Action Button — Light surface pill button.
+ * Premium Secondary / Ghost Button — AMOLED Edition.
+ *
+ * Features:
+ * - True-black glass surface (#0D0D0D) with thin border
+ * - Animated border: neutral (#2A2A2A) → electric blue when "Saved"
+ * - Icon + label tint animate smoothly with the state
+ * - Spring scale + haptic
  */
 @Composable
 fun SecondaryButton(
@@ -105,33 +176,28 @@ fun SecondaryButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
-        label = "secondaryButtonScale"
-    )
     val haptic = LocalHapticFeedback.current
     val isSaved = label.contains("Saved", ignoreCase = true)
 
-    val borderColor by animateColorAsState(
-        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(300),
-        label = "secondaryBorderColor"
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 550f),
+        label = "secondaryScale"
     )
-    val bgColor by animateColorAsState(
-        targetValue = if (isSaved) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-        animationSpec = tween(300),
-        label = "secondaryBgColor"
+    val borderColor by animateColorAsState(
+        targetValue = if (isSaved) SecondaryBorderSaved else SecondaryBorder,
+        animationSpec = tween(320),
+        label = "secondaryBorder"
     )
     val iconTint by animateColorAsState(
-        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-        animationSpec = tween(300),
+        targetValue = if (isSaved) AccentPrimaryColor else Color(0xFFB0B8C8),
+        animationSpec = tween(320),
         label = "secondaryIconTint"
     )
     val labelColor by animateColorAsState(
-        targetValue = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-        animationSpec = tween(300),
-        label = "secondaryLabelColor"
+        targetValue = if (isSaved) AccentPrimaryColor else Color(0xFFB0B8C8),
+        animationSpec = tween(320),
+        label = "secondaryLabel"
     )
 
     Row(
@@ -139,17 +205,14 @@ fun SecondaryButton(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .wrapContentWidth()
-            .height(46.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .height(48.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(bgColor)
+            .background(SecondaryBg)
             .border(1.dp, borderColor, MaterialTheme.shapes.extraLarge)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                indication = rememberRipple(color = Color.White.copy(alpha = 0.08f)),
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
@@ -166,14 +229,19 @@ fun SecondaryButton(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
             color = labelColor,
             modifier = Modifier.padding(start = 7.dp)
         )
     }
 }
 
+// Expose the colour constant so SecondaryButton can reference it without importing the full theme
+private val AccentPrimaryColor = Color(0xFF5B9BFF)
+
 /**
- * Accent Button — Gradient Electric Blue branded CTA.
+ * Premium Accent Button — Full-width gradient CTA (used in auth/onboarding screens).
+ * Stronger gradient, larger height for hero placement.
  */
 @Composable
 fun AccentButton(
@@ -184,51 +252,70 @@ fun AccentButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
-        label = "accentButtonScale"
-    )
     val haptic = LocalHapticFeedback.current
 
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 550f),
+        label = "accentScale"
+    )
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .height(52.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .shadow(
+                elevation = if (pressed) 16.dp else 4.dp,
+                shape = MaterialTheme.shapes.extraLarge,
+                ambientColor = PrimaryGlow,
+                spotColor = PrimaryGlow
+            )
             .clip(MaterialTheme.shapes.extraLarge)
             .background(
-                Brush.horizontalGradient(
-                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                Brush.linearGradient(
+                    colorStops = arrayOf(
+                        0.0f to PrimaryGradientStart,
+                        0.5f to Color(0xFF3A76E8),
+                        1.0f to PrimaryGradientEnd
+                    )
                 )
             )
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Color.White.copy(alpha = 0.2f)),
+                indication = rememberRipple(color = Color.White.copy(alpha = 0.18f)),
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onClick()
                 }
             )
     ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
+        // Glass shimmer highlight
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color.White.copy(alpha = 0.25f), Color.Transparent)
+                    )
+                )
+        )
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().height(52.dp)
+        ) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = if (icon != null) Modifier.padding(start = 7.dp) else Modifier
             )
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = Color.White,
-            modifier = if (icon != null) Modifier.padding(start = 6.dp) else Modifier
-        )
     }
 }

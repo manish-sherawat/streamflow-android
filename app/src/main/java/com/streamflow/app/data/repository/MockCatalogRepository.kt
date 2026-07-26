@@ -165,7 +165,7 @@ class MockCatalogRepository @Inject constructor() : CatalogRepository {
         )
     }
 
-    override suspend fun getTitle(id: String): Title? {
+    override suspend fun getTitle(id: String, forceRefresh: Boolean): Title? {
         delay(150)
         val base = allTitles.find { it.id == id } ?: return null
         val (pos, dur) = progress[id] ?: (0 to (base.episodes.firstOrNull()?.durationSec ?: 0))

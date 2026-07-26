@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CatalogRepository {
     fun getHomeRails(): Flow<List<Rail>>
-    suspend fun getTitle(id: String): Title?
+    suspend fun getTitle(id: String, forceRefresh: Boolean = false): Title?
     suspend fun getSimilarTitles(id: String): List<Title>
     suspend fun search(query: String): List<Title>
     suspend fun getContinueWatching(): List<Title>

@@ -71,7 +71,11 @@ fun StreamFlowNavGraph(navController: NavHostController = rememberNavController(
             }
             composable(
                 route = Destination.TitleDetail.route,
-                arguments = listOf(navArgument("titleId") { })
+                arguments = listOf(androidx.navigation.navArgument("titleId") { }),
+                deepLinks = listOf(
+                    androidx.navigation.navDeepLink { uriPattern = "streamflow://title/{titleId}" },
+                    androidx.navigation.navDeepLink { uriPattern = "https://streamflow.app/title/{titleId}" }
+                )
             ) {
                 TitleDetailScreen(
                     onBack = { navController.popBackStack() },

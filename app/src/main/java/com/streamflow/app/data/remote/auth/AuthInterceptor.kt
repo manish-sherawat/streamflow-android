@@ -20,13 +20,17 @@ class AuthInterceptor @Inject constructor(
 
         val requestBuilder = originalRequest.newBuilder()
             .header("X-API-Key", NetworkConfig.API_KEY)
+            .header("Cache-Control", "no-cache, no-store, must-revalidate")
+            .header("Pragma", "no-cache")
 
         val currentUser = firebaseAuth.currentUser
         if (currentUser != null) {
             val token = try {
-                runBlocking {
-                    currentUser.getIdToken(false).await().token
-                }
+                com.google.android.gms.tasks.Tasks.await(
+                    currentUser.getIdToken(false),
+                    3,
+                    java.util.concurrent.TimeUnit.SECONDS
+                )?.token
             } catch (e: Exception) {
                 null
             }

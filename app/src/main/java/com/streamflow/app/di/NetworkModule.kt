@@ -40,7 +40,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        retryInterceptor: com.streamflow.app.data.remote.interceptor.RetryInterceptor
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -48,6 +49,7 @@ object NetworkModule {
 
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(retryInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(NetworkConfig.TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(NetworkConfig.TIMEOUT_SECONDS, TimeUnit.SECONDS)

@@ -15,22 +15,30 @@ import retrofit2.http.Query
 interface StreamFlowApiService {
 
     @GET("v1/catalog")
-    suspend fun getCatalog(): CatalogResponseDto
+    suspend fun getCatalog(
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
+    ): CatalogResponseDto
 
     @GET("v1/catalog/featured")
-    suspend fun getFeaturedTitles(): List<TitleDto>
+    suspend fun getFeaturedTitles(
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
+    ): List<TitleDto>
 
     @GET("v1/catalog/rails")
-    suspend fun getHomeRails(): List<RailDto>
+    suspend fun getHomeRails(
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
+    ): List<RailDto>
 
     @GET("v1/titles/{id}")
     suspend fun getTitleById(
-        @Path("id") titleId: String
+        @Path("id") titleId: String,
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
     ): TitleDto
 
     @GET("v1/titles/search")
     suspend fun searchTitles(
-        @Query("q") query: String
+        @Query("q") query: String,
+        @Query("_t") timestamp: Long = System.currentTimeMillis()
     ): List<TitleDto>
 
     @GET("v1/watchlist")

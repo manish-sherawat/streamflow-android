@@ -62,23 +62,35 @@ data class PlayerUiState(
     val subtitleTracks: List<TrackOption> = emptyList(),
     val availableVideoQualities: List<VideoQualityOption> = emptyList(),
     val subtitleStyle: SubtitleStyleConfig = SubtitleStyleConfig(),
+    val currentQualityBadge: String = "Auto (Adaptive)",
     val nextEpisode: com.streamflow.app.data.model.Episode? = null,
-    val isNextEpisodeCountdownActive: Boolean = false
+    val isNextEpisodeCountdownActive: Boolean = false,
+    val isNerdStatsVisible: Boolean = false,
+    val bufferDurationMs: Long = 0L,
+    val videoWidth: Int = 0,
+    val videoHeight: Int = 0,
+    val bitrateKbps: Int = 0
 )
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     application: Application,
     private val repository: CatalogRepository,
-    private val authRepository: AuthRepository,
+    val authRepository: AuthRepository,
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
+
+    private val prefs by lazy {
+        application.getSharedPreferences("streamflow_subtitle_prefs", android.content.Context.MODE_PRIVATE)
+    }
 
     private val titleId: String = checkNotNull(savedStateHandle.get<String>("titleId"))
     private val episodeId: String? = savedStateHandle.get<String>("episodeId")?.takeIf { it.isNotBlank() }
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    private var autoFailoverCount = 0
 
     private val trackSelector = DefaultTrackSelector(application)
 
@@ -106,20 +118,58 @@ class PlayerViewModel @Inject constructor(
             updateTracksFromPlayer(tracks)
         }
 
+        override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+            val badge = when {
+                videoSize.height >= 2160 -> "4K UHD (${videoSize.height}p)"
+                videoSize.height >= 1080 -> "1080p Full HD"
+                videoSize.height >= 720  -> "720p HD"
+                videoSize.height > 0     -> "${videoSize.height}p"
+                else -> "Auto (Adaptive)"
+            }
+            _uiState.value = _uiState.value.copy(
+                currentQualityBadge = badge,
+                videoWidth = videoSize.width,
+                videoHeight = videoSize.height
+            )
+        }
+
         override fun onPlayerError(error: PlaybackException) {
             android.util.Log.e("ExoPlayerError", "Error playing movie: ${error.errorCodeName} - ${error.message}", error)
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                errorMessage = "Playback Error (${error.errorCodeName}): ${error.localizedMessage ?: "Decoder failure"}"
-            )
+            if (autoFailoverCount < 2) {
+                autoFailoverCount++
+                android.util.Log.w("ExoPlayerFailover", "Automated CDN/stream failover attempt $autoFailoverCount...")
+                viewModelScope.launch {
+                    delay(1000)
+                    loadStream()
+                }
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Playback Error (${error.errorCodeName}): ${error.localizedMessage ?: "CDN Manifest Drop"}"
+                )
+            }
         }
     }
 
     init {
+        loadSavedSubtitleStyle()
         player.addListener(playerListener)
         loadStream()
         startProgressSyncLoop()
         observeDataSaver()
+    }
+
+    private fun loadSavedSubtitleStyle() {
+        val fontSize = prefs.getInt("sub_font_size", 18)
+        val textColor = prefs.getLong("sub_text_color", 0xFFFFFFFF)
+        val bgColor = prefs.getLong("sub_bg_color", 0x80000000)
+        _uiState.value = _uiState.value.copy(
+            subtitleStyle = SubtitleStyleConfig(
+                fontSizeSp = fontSize,
+                textColorArgb = textColor,
+                backgroundColorArgb = bgColor
+            )
+        )
     }
 
     private fun observeDataSaver() {
@@ -134,6 +184,17 @@ class PlayerViewModel @Inject constructor(
                 trackSelector.setParameters(builder)
             }
         }
+        viewModelScope.launch {
+            authRepository.preferredAudioLanguage.collectLatest { lang ->
+                val builder = trackSelector.buildUponParameters()
+                builder.setPreferredAudioLanguage(lang)
+                trackSelector.setParameters(builder)
+            }
+        }
+    }
+
+    fun toggleNerdStats() {
+        _uiState.value = _uiState.value.copy(isNerdStatsVisible = !_uiState.value.isNerdStatsVisible)
     }
 
     private fun loadStream() {
@@ -141,7 +202,7 @@ class PlayerViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             // Fetch title detail to check server capabilities (e.g. is4kHdr)
-            val titleDetails = runCatching { repository.getTitle(titleId) }.getOrNull()
+            val titleDetails = runCatching { repository.getTitle(titleId, forceRefresh = true) }.getOrNull()
             val is4kSupported = titleDetails?.is4kHdr == true
 
             // Build dynamic server quality options — 4K UHD is ONLY included if server/title supports 4K!
@@ -335,6 +396,15 @@ class PlayerViewModel @Inject constructor(
                 if (player.playbackState == Player.STATE_READY && player.isPlaying) {
                     val duration = player.duration
                     val currentPos = player.currentPosition
+                    val bufferMs = (player.bufferedPosition - currentPos).coerceAtLeast(0L)
+                    val format = player.videoFormat
+                    val bitrate = if (format != null && format.bitrate > 0) format.bitrate / 1000 else 0
+
+                    _uiState.value = _uiState.value.copy(
+                        bufferDurationMs = bufferMs,
+                        bitrateKbps = bitrate
+                    )
+
                     if (duration > 0 && (duration - currentPos) <= 15_000) {
                         if (_uiState.value.nextEpisode != null && !_uiState.value.isNextEpisodeCountdownActive) {
                             _uiState.value = _uiState.value.copy(isNextEpisodeCountdownActive = true)
@@ -369,7 +439,7 @@ class PlayerViewModel @Inject constructor(
                 player.prepare()
                 player.playWhenReady = true
 
-                val titleDetails = runCatching { repository.getTitle(titleId) }.getOrNull()
+                val titleDetails = runCatching { repository.getTitle(titleId, forceRefresh = true) }.getOrNull()
                 val epIndex = titleDetails?.episodes?.indexOfFirst { it.id == nextEp.id } ?: -1
                 val newNextEp = if (titleDetails != null && epIndex >= 0 && epIndex + 1 < titleDetails.episodes.size) {
                     titleDetails.episodes[epIndex + 1]
@@ -459,6 +529,11 @@ class PlayerViewModel @Inject constructor(
 
     fun setSubtitleStyle(style: SubtitleStyleConfig) {
         _uiState.value = _uiState.value.copy(subtitleStyle = style)
+        prefs.edit()
+            .putInt("sub_font_size", style.fontSizeSp)
+            .putLong("sub_text_color", style.textColorArgb)
+            .putLong("sub_bg_color", style.backgroundColorArgb)
+            .apply()
     }
 
     fun retryPlayback() {
@@ -469,8 +544,10 @@ class PlayerViewModel @Inject constructor(
     fun syncProgress() {
         val positionSec = (player.currentPosition / 1000).toInt()
         val durationSec = (player.duration.takeIf { it > 0 } ?: 0L).div(1000).toInt()
-        viewModelScope.launch {
-            repository.updateProgress(titleId, episodeId, positionSec, durationSec)
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable) {
+            runCatching {
+                repository.updateProgress(titleId, episodeId, positionSec, durationSec)
+            }
         }
     }
 

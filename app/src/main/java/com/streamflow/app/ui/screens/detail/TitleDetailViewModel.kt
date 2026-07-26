@@ -39,7 +39,7 @@ class TitleDetailViewModel @Inject constructor(
 
     private fun load() {
         viewModelScope.launch {
-            val title = repository.getTitle(titleId)
+            val title = repository.getTitle(titleId, forceRefresh = true)
             if (title == null) {
                 _uiState.value = TitleDetailUiState.NotFound
                 return@launch
@@ -61,7 +61,7 @@ class TitleDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                val title = repository.getTitle(titleId)
+                val title = repository.getTitle(titleId, forceRefresh = true)
                 if (title != null) {
                     val similar = repository.getSimilarTitles(titleId)
                     val watchlist = repository.getWatchlist()

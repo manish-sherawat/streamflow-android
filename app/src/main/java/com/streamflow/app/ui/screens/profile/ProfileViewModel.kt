@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.streamflow.app.data.model.Title
 import com.streamflow.app.data.repository.AuthRepository
 import com.streamflow.app.data.repository.CatalogRepository
-import com.streamflow.app.data.repository.DownloadRepository
 import com.streamflow.app.data.repository.FirestoreCatalogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,19 +33,16 @@ data class AppUpdateState(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val downloadRepository: DownloadRepository,
     private val catalogRepository: CatalogRepository
 ) : ViewModel() {
 
     val userSession = authRepository.userSession
     val isAuthenticated = authRepository.isAuthenticated
     val isDataSaverEnabled = authRepository.isDataSaverEnabled
+    val isAutoPlayNextEnabled = authRepository.isAutoPlayNextEnabled
 
     private val _updateState = MutableStateFlow(AppUpdateState())
     val updateState: StateFlow<AppUpdateState> = _updateState.asStateFlow()
-
-    val downloadedTitles: StateFlow<List<Title>> = downloadRepository.downloadedTitles
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun checkForUpdates() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -124,9 +120,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun removeDownload(titleId: String) {
+    fun toggleAutoPlayNext(enabled: Boolean) {
         viewModelScope.launch {
-            downloadRepository.removeDownload(titleId)
+            authRepository.toggleAutoPlayNext(enabled)
         }
     }
 

@@ -9,17 +9,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.streamflow.app.ui.theme.AccentPrimary
-import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.PillBg
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.StreamFlowType
-import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 
 /**
- * Minimalist flat chip for metadata badges (year, quality, genre, subtitles).
- * No border, no glass — flat dark surface only.
- * Highlighted variant uses the blue accent background.
+ * Minimalist dark chip for metadata badges (year, quality, genre, subtitles).
+ * Dark surface background matching the cinematic dark theme.
+ * Highlighted variant uses the blue accent.
  */
 @Composable
 fun GlassPill(
@@ -28,7 +26,7 @@ fun GlassPill(
     isHighlighted: Boolean = false,
     textColor: Color = TextSecondary
 ) {
-    val bg    = if (isHighlighted) AccentPrimary.copy(alpha = 0.18f) else PillBg
+    val bg    = if (isHighlighted) AccentPrimary.copy(alpha = 0.22f) else PillBg
     val color = if (isHighlighted) AccentPrimary else textColor
 
     Text(

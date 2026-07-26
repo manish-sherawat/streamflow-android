@@ -12,7 +12,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FirebaseAuthRepository @Inject constructor() : AuthRepository {
+class FirebaseAuthRepository @Inject constructor(
+    private val application: android.app.Application
+) : AuthRepository {
+
+    private val prefs by lazy {
+        application.getSharedPreferences("streamflow_user_prefs", android.content.Context.MODE_PRIVATE)
+    }
 
     private val firebaseAuth: FirebaseAuth? by lazy {
         runCatching { FirebaseAuth.getInstance() }.getOrNull()
@@ -32,8 +38,14 @@ class FirebaseAuthRepository @Inject constructor() : AuthRepository {
     private val _isAuthenticated = MutableStateFlow(false)
     override val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
 
-    private val _isDataSaverEnabled = MutableStateFlow(false)
+    private val _isDataSaverEnabled = MutableStateFlow(prefs.getBoolean("data_saver_enabled", false))
     override val isDataSaverEnabled: StateFlow<Boolean> = _isDataSaverEnabled.asStateFlow()
+
+    private val _isAutoPlayNextEnabled = MutableStateFlow(prefs.getBoolean("autoplay_next_enabled", true))
+    override val isAutoPlayNextEnabled: StateFlow<Boolean> = _isAutoPlayNextEnabled.asStateFlow()
+
+    private val _preferredAudioLanguage = MutableStateFlow(prefs.getString("preferred_audio_language", "en") ?: "en")
+    override val preferredAudioLanguage: StateFlow<String> = _preferredAudioLanguage.asStateFlow()
 
     init {
         try {
@@ -41,7 +53,7 @@ class FirebaseAuthRepository @Inject constructor() : AuthRepository {
                 val user = auth.currentUser
                 if (user != null) {
                     val email = user.email ?: "user@streamflow.app"
-                    val isAdmin = email.contains("admin", ignoreCase = true) || email.endsWith("@streamflow.app")
+                    val isAdmin = email.endsWith("@streamflow.app", ignoreCase = true)
                     _userSession.value = UserSession(
                         uid = user.uid,
                         email = email,
@@ -121,5 +133,16 @@ class FirebaseAuthRepository @Inject constructor() : AuthRepository {
 
     override suspend fun toggleDataSaver(enabled: Boolean) {
         _isDataSaverEnabled.value = enabled
+        prefs.edit().putBoolean("data_saver_enabled", enabled).apply()
+    }
+
+    override suspend fun toggleAutoPlayNext(enabled: Boolean) {
+        _isAutoPlayNextEnabled.value = enabled
+        prefs.edit().putBoolean("autoplay_next_enabled", enabled).apply()
+    }
+
+    override suspend fun setPreferredAudioLanguage(lang: String) {
+        _preferredAudioLanguage.value = lang
+        prefs.edit().putString("preferred_audio_language", lang).apply()
     }
 }

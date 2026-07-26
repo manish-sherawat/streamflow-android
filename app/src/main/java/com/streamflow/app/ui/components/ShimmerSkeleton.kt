@@ -30,10 +30,10 @@ import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 
-// Modern light theme silver-white metallic shimmer gradient
-private val shimmerBase      = Color(0xFFE2E8F0)
-private val shimmerMid       = Color(0xFFF1F5F9)
-private val shimmerHighlight = Color(0xFFFFFFFF)
+// Dark AMOLED metallic shimmer gradient (no bright white flash)
+private val shimmerBase      = Color(0xFF121212)
+private val shimmerMid       = Color(0xFF1E1E1E)
+private val shimmerHighlight = Color(0xFF2D2D2D)
 
 @Composable
 fun ShimmerBrush(

@@ -35,8 +35,14 @@ class StreamFlowApp : Application(), ImageLoaderFactory {
             }
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
-            .respectCacheHeaders(false)
             .crossfade(true)
             .build()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_BACKGROUND) {
+            coil.Coil.imageLoader(this).memoryCache?.clear()
+        }
     }
 }

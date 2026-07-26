@@ -44,6 +44,13 @@ class HomeViewModel @Inject constructor(
     private val _updateState = MutableStateFlow<SilentUpdateState?>(null)
     val updateState: StateFlow<SilentUpdateState?> = _updateState.asStateFlow()
 
+    private val _smartResumeTitle = MutableStateFlow<com.streamflow.app.data.model.Title?>(null)
+    val smartResumeTitle: StateFlow<com.streamflow.app.data.model.Title?> = _smartResumeTitle.asStateFlow()
+
+    fun dismissSmartResume() {
+        _smartResumeTitle.value = null
+    }
+
     init {
         loadHome()
         refreshWatchlist()
@@ -165,6 +172,7 @@ class HomeViewModel @Inject constructor(
                     .collect { rails ->
                         val combinedRails = mutableListOf<Rail>()
                         if (continueWatching.isNotEmpty()) {
+                            _smartResumeTitle.value = continueWatching.firstOrNull()
                             combinedRails.add(Rail(id = "continue-watching", title = "CONTINUE WATCHING", titles = continueWatching))
                         }
                         combinedRails.addAll(rails.filter { it.titles.isNotEmpty() })

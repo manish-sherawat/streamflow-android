@@ -3,73 +3,80 @@ package com.streamflow.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * StreamFlow — Material 3 Expressive Light Color System (NO RED, Pure Light Theme).
+ * StreamFlow — Pure AMOLED Dark Color System.
+ * True black backgrounds (#000000) for OLED battery saving.
+ * Electric Blue primary. No purple, no red.
  */
 
-/** Brand Seed — Electric Blue / Vibrant Azure (NO RED) */
+/** Brand Seed — Electric Blue */
 val StreamFlowSeed = Color(0xFF2563EB)
 
-// ---- Pure Light Theme Color Scheme Tokens ----
-val md_theme_light_background = Color(0xFFF8FAFC)
-val md_theme_light_surface = Color(0xFFFFFFFF)
-val md_theme_light_surfaceDim = Color(0xFFE2E8F0)
-val md_theme_light_surfaceBright = Color(0xFFFFFFFF)
-val md_theme_light_surfaceContainerLowest = Color(0xFFFFFFFF)
-val md_theme_light_surfaceContainerLow = Color(0xFFF1F5F9)
-val md_theme_light_surfaceContainer = Color(0xFFE2E8F0)
-val md_theme_light_surfaceContainerHigh = Color(0xFFCBD5E1)
-val md_theme_light_surfaceContainerHighest = Color(0xFF94A3B8)
+// ── Pure AMOLED Black Palette ─────────────────────────────────────────────────
+val md_theme_dark_background              = Color(0xFF000000)   // true black — AMOLED
+val md_theme_dark_surface                 = Color(0xFF0D0D0D)   // near-black surface
+val md_theme_dark_surfaceDim              = Color(0xFF050505)
+val md_theme_dark_surfaceBright           = Color(0xFF141414)
+val md_theme_dark_surfaceContainerLowest  = Color(0xFF000000)   // AMOLED absolute
+val md_theme_dark_surfaceContainerLow     = Color(0xFF0D0D0D)
+val md_theme_dark_surfaceContainer        = Color(0xFF121212)
+val md_theme_dark_surfaceContainerHigh    = Color(0xFF181818)
+val md_theme_dark_surfaceContainerHighest = Color(0xFF1E1E1E)
 
-val md_theme_light_onSurface = Color(0xFF0F172A)
-val md_theme_light_onSurfaceVariant = Color(0xFF334155)
-val md_theme_light_outline = Color(0xFF94A3B8)
-val md_theme_light_outlineVariant = Color(0xFFE2E8F0)
+val md_theme_dark_onSurface              = Color(0xFFF0F2FF)   // near-white
+val md_theme_dark_onSurfaceVariant       = Color(0xFF9099B0)   // muted secondary
+val md_theme_dark_outline                = Color(0xFF3A3F52)
+val md_theme_dark_outlineVariant         = Color(0xFF1E2130)   // barely visible divider
 
-val md_theme_light_primary = Color(0xFF2563EB)
-val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-val md_theme_light_primaryContainer = Color(0xFFDBEAFE)
-val md_theme_light_onPrimaryContainer = Color(0xFF1E40AF)
+// Primary — Electric Blue (slightly lighter for AMOLED contrast)
+val md_theme_dark_primary                = Color(0xFF5B9BFF)
+val md_theme_dark_onPrimary              = Color(0xFF000000)
+val md_theme_dark_primaryContainer       = Color(0xFF0F2A5C)
+val md_theme_dark_onPrimaryContainer     = Color(0xFFB8D4FF)
 
-val md_theme_light_secondary = Color(0xFF3B82F6)
-val md_theme_light_onSecondary = Color(0xFFFFFFFF)
-val md_theme_light_secondaryContainer = Color(0xFFEFF6FF)
-val md_theme_light_onSecondaryContainer = Color(0xFF1D4ED8)
+// Secondary — Sky Blue
+val md_theme_dark_secondary              = Color(0xFF74B3FF)
+val md_theme_dark_onSecondary            = Color(0xFF001D45)
+val md_theme_dark_secondaryContainer     = Color(0xFF0A2050)
+val md_theme_dark_onSecondaryContainer   = Color(0xFFCCE0FF)
 
-val md_theme_light_tertiary = Color(0xFFD97706)
-val md_theme_light_onTertiary = Color(0xFFFFFFFF)
-val md_theme_light_tertiaryContainer = Color(0xFFFEF3C7)
-val md_theme_light_onTertiaryContainer = Color(0xFF92400E)
+// Tertiary — Warm Amber (ratings / stars — no purple)
+val md_theme_dark_tertiary               = Color(0xFFF5A623)
+val md_theme_dark_onTertiary             = Color(0xFF2D1800)
+val md_theme_dark_tertiaryContainer      = Color(0xFF3D2500)
+val md_theme_dark_onTertiaryContainer    = Color(0xFFFFDFA0)
 
-val md_theme_light_error = Color(0xFFDC2626)
-val md_theme_light_onError = Color(0xFFFFFFFF)
-val md_theme_light_errorContainer = Color(0xFFFEE2E2)
-val md_theme_light_onErrorContainer = Color(0xFF991B1B)
+// Error
+val md_theme_dark_error                  = Color(0xFFFF6B6B)
+val md_theme_dark_onError                = Color(0xFF400000)
+val md_theme_dark_errorContainer         = Color(0xFF5A1A1A)
+val md_theme_dark_onErrorContainer       = Color(0xFFFFB3B3)
 
-// ---- Legacy Compatibility Tokens (Remapped to Pure Light Theme) ----
-val BgBase = md_theme_light_background
-val BgCard = md_theme_light_surfaceContainerLow
-val BgElevated = md_theme_light_surface
-val BgSurface = md_theme_light_surfaceContainer
-val BgInput = md_theme_light_surfaceContainerLow
+// ── Semantic Tokens ───────────────────────────────────────────────────────────
+val BgBase     = md_theme_dark_background              // #000000 AMOLED true black
+val BgCard     = md_theme_dark_surfaceContainerLow     // #0D0D0D
+val BgElevated = md_theme_dark_surface                 // #0D0D0D
+val BgSurface  = md_theme_dark_surfaceContainer        // #121212
+val BgInput    = md_theme_dark_surfaceContainerHigh    // #181818
 val BgGradientTop = BgBase
 
-val TextPrimary = md_theme_light_onSurface
-val TextSecondary = md_theme_light_onSurfaceVariant
-val TextTertiary = md_theme_light_outline
-val TextMuted = Color(0xFF64748B)
+val TextPrimary   = md_theme_dark_onSurface            // #F0F2FF
+val TextSecondary = md_theme_dark_onSurfaceVariant     // #9099B0
+val TextTertiary  = md_theme_dark_outline
+val TextMuted     = Color(0xFF565D70)
 
-val AccentPrimary = StreamFlowSeed
-val AccentSecondary = md_theme_light_secondary
-val AccentFocus = StreamFlowSeed
-val AccentMagenta = StreamFlowSeed
-val AccentStar = md_theme_light_tertiary
-val AccentCream = TextPrimary
-val AccentGlow = Color(0x202563EB)
+val AccentPrimary   = md_theme_dark_primary            // #5B9BFF
+val AccentSecondary = md_theme_dark_secondary          // #74B3FF
+val AccentFocus     = AccentPrimary
+val AccentMagenta   = AccentPrimary                    // mapped to blue
+val AccentStar      = md_theme_dark_tertiary           // Amber
+val AccentCream     = TextPrimary
+val AccentGlow      = Color(0x285B9BFF)
 
-val Divider = md_theme_light_outlineVariant
-val GlassBorder = md_theme_light_outlineVariant
-val GlassHighlight = md_theme_light_outlineVariant
+// ── AMOLED-tuned borders — ultra-thin on true black ──────────────────────────
+val Divider         = Color(0xFF161616)
+val GlassBorder     = Color(0xFF1E1E1E)
+val GlassHighlight  = Color(0xFF262626)
 
-val PillBg = md_theme_light_surfaceContainerLow
-val PillBorder = md_theme_light_outlineVariant
-val GlassFill = Color(0xFDF8FAFC)
+val PillBg          = md_theme_dark_surfaceContainerHigh  // #181818
+val PillBorder      = Color(0xFF242424)
+val GlassFill       = md_theme_dark_surfaceContainer

@@ -35,6 +35,12 @@ class MockAuthRepository @Inject constructor() : AuthRepository {
     private val _isDataSaverEnabled = MutableStateFlow(false)
     override val isDataSaverEnabled: StateFlow<Boolean> = _isDataSaverEnabled.asStateFlow()
 
+    private val _isAutoPlayNextEnabled = MutableStateFlow(true)
+    override val isAutoPlayNextEnabled: StateFlow<Boolean> = _isAutoPlayNextEnabled.asStateFlow()
+
+    private val _preferredAudioLanguage = MutableStateFlow("en")
+    override val preferredAudioLanguage: StateFlow<String> = _preferredAudioLanguage.asStateFlow()
+
     override suspend fun login(email: String, password: String): Result<Unit> {
         if (email.isBlank() || password.isBlank()) {
             return Result.failure(IllegalArgumentException("Email and password cannot be empty"))
@@ -97,5 +103,13 @@ class MockAuthRepository @Inject constructor() : AuthRepository {
 
     override suspend fun toggleDataSaver(enabled: Boolean) {
         _isDataSaverEnabled.value = enabled
+    }
+
+    override suspend fun toggleAutoPlayNext(enabled: Boolean) {
+        _isAutoPlayNextEnabled.value = enabled
+    }
+
+    override suspend fun setPreferredAudioLanguage(lang: String) {
+        _preferredAudioLanguage.value = lang
     }
 }

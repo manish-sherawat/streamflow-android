@@ -122,6 +122,7 @@ class NeonCatalogRepository @Inject constructor(
 
             if (rails.isNotEmpty()) {
                 cachedRails = rails
+                cachedTitlesMap.clear()
                 rails.flatMap { it.titles }.forEach { cachedTitlesMap[it.id] = it }
                 emit(rails)
             }
@@ -131,13 +132,9 @@ class NeonCatalogRepository @Inject constructor(
         }
     }
 
-    override suspend fun getTitle(id: String): Title? {
-        cachedTitlesMap[id]?.let { return it }
-        fallbackTitles.find { it.id == id }?.let { return it }
-        fallbackAnimeTitles.find { it.id == id }?.let { return it }
-        cachedRails?.flatMap { it.titles }?.find { it.id == id }?.let {
-            cachedTitlesMap[id] = it
-            return it
+    override suspend fun getTitle(id: String, forceRefresh: Boolean): Title? {
+        if (!forceRefresh) {
+            cachedTitlesMap[id]?.let { return it }
         }
         return try {
             val dto = apiService.getTitleById(id)
@@ -239,35 +236,41 @@ class NeonCatalogRepository @Inject constructor(
 
     override suspend fun getPlaybackUrl(titleId: String, episodeId: String?): String {
         return try {
-            // 1. Fetch title (from live cache or API)
-            val title = getTitle(titleId) ?: runCatching { apiService.getTitleById(titleId).toDomain() }.getOrNull()
-            
-            if (title != null) {
+            // 1. Fetch live DTO directly from API to get the latest updated link
+            val dto = apiService.getTitleById(titleId)
+            val freshTitle = dto.toDomain()
+            cachedTitlesMap[freshTitle.id] = freshTitle
+
+            if (episodeId != null) {
+                val ep = dto.episodes.find { it.id == episodeId }
+                if (ep != null) {
+                    val epPath = ep.hlsPath.ifEmpty { ep.altHlsPath ?: "" }
+                    if (epPath.isNotEmpty()) return epPath
+                }
+            }
+
+            val linkUrl = dto.streamLinks.firstOrNull()?.url ?: ""
+            if (linkUrl.isNotEmpty()) return linkUrl
+
+            if (dto.hlsManifestPath.isNotEmpty()) {
+                return dto.hlsManifestPath
+            }
+
+            freshTitle.hlsManifestPath
+        } catch (e: Exception) {
+            android.util.Log.e("NeonCatalogRepository", "Failed to fetch live playback URL for title $titleId, falling back to cache", e)
+            val cachedTitle = getTitle(titleId, forceRefresh = false)
+            if (cachedTitle != null) {
                 if (episodeId != null) {
-                    val ep = title.episodes.find { it.id == episodeId }
+                    val ep = cachedTitle.episodes.find { it.id == episodeId }
                     if (ep != null && ep.hlsPath.isNotEmpty()) {
                         return ep.hlsPath
                     }
                 }
-                if (title.hlsManifestPath.isNotEmpty()) {
-                    return title.hlsManifestPath
+                if (cachedTitle.hlsManifestPath.isNotEmpty()) {
+                    return cachedTitle.hlsManifestPath
                 }
             }
-
-            // 2. Fetch directly from live API DTO
-            val dto = apiService.getTitleById(titleId)
-            if (episodeId != null) {
-                val ep = dto.episodes.find { it.id == episodeId }
-                if (ep != null) {
-                    val epPath = ep.altHlsPath ?: ep.hlsPath
-                    if (!epPath.isNullOrEmpty()) return epPath
-                }
-            }
-            dto.hlsManifestPath.ifEmpty {
-                dto.streamLinks.firstOrNull()?.url ?: ""
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("NeonCatalogRepository", "Failed to fetch live playback URL for title $titleId", e)
             ""
         }
     }

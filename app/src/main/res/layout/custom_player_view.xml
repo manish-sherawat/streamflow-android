@@ -6,5 +6,9 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true"
     app:surface_type="texture_view"
-    app:use_controller="false"
+    app:use_controller="true"
+    app:show_buffering="when_playing"
     app:shutter_background_color="@android:color/transparent" />
+
+
+

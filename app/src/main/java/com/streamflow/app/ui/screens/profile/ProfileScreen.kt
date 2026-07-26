@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -87,11 +88,11 @@ fun ProfileScreen(
     onSignOut: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val session            by viewModel.userSession.collectAsState()
-    val isAuthenticated    by viewModel.isAuthenticated.collectAsState()
-    val isDataSaverEnabled by viewModel.isDataSaverEnabled.collectAsState()
-    val downloadedTitles   by viewModel.downloadedTitles.collectAsState()
-    val updateState        by viewModel.updateState.collectAsState()
+    val session               by viewModel.userSession.collectAsState()
+    val isAuthenticated       by viewModel.isAuthenticated.collectAsState()
+    val isDataSaverEnabled    by viewModel.isDataSaverEnabled.collectAsState()
+    val isAutoPlayNextEnabled by viewModel.isAutoPlayNextEnabled.collectAsState()
+    val updateState           by viewModel.updateState.collectAsState()
     val uriHandler         = LocalUriHandler.current
 
     var showProfileDialog  by remember { mutableStateOf(false) }
@@ -379,93 +380,50 @@ fun ProfileScreen(
                     thickness = 0.5.dp
                 )
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.md, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = Spacing.md)
+                    ) {
+                        Text("Auto-Play Next Episode", style = StreamFlowType.body.copy(fontWeight = FontWeight.Medium), color = TextPrimary)
+                        Text("Automatically play next episode on series end", style = StreamFlowType.caption, color = TextSecondary)
+                    }
+                    Switch(
+                        checked = isAutoPlayNextEnabled,
+                        onCheckedChange = viewModel::toggleAutoPlayNext,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor  = BgBase,
+                            checkedTrackColor  = TextPrimary,
+                            uncheckedThumbColor = TextMuted,
+                            uncheckedTrackColor = BgElevated
+                        )
+                    )
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 52.dp),
+                    color = Divider,
+                    thickness = 0.5.dp
+                )
+
                 SettingsRow(
                     icon = Icons.Filled.SystemUpdate,
                     label = "Check for App Updates",
                     sublabel = "Current version: v${com.streamflow.app.BuildConfig.VERSION_NAME}",
                     onClick = { viewModel.checkForUpdates() }
                 )
-            }
-            Spacer(modifier = Modifier.height(Spacing.md))
-        }
-
-        // ── Offline Downloads ─────────────────────────────────────────────────
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.md),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Downloads", style = StreamFlowType.sectionHeader, color = TextPrimary)
-                Text(
-                    "${downloadedTitles.size} saved",
-                    style = StreamFlowType.caption,
-                    color = TextSecondary
-                )
-            }
-            Spacer(modifier = Modifier.height(Spacing.sm))
-        }
-
-        item {
-            if (downloadedTitles.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.md)
-                        .clip(Radius.card)
-                        .background(BgCard)
-                        .padding(Spacing.lg),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Filled.DownloadDone,
-                        contentDescription = null,
-                        tint = TextMuted,
-                        modifier = Modifier.size(36.dp)
-                    )
-                    Text(
-                        "No downloads yet",
-                        style = StreamFlowType.body,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(top = Spacing.xs)
-                    )
-                }
-            } else {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Spacing.md),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
-                ) {
-                    items(downloadedTitles, key = { it.id }) { title ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            PosterCard(
-                                posterUrl = title.posterUrl,
-                                titleLabel = title.name,
-                                onClick = { onTitleClick(title) }
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .padding(top = 5.dp)
-                                    .clickable { viewModel.removeDownload(title.id) },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Filled.Delete,
-                                    contentDescription = "Remove",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Text(
-                                    "Remove",
-                                    style = StreamFlowType.caption,
-                                    color = TextSecondary,
-                                    modifier = Modifier.padding(start = 3.dp)
-                                )
-                            }
-                        }
-                    }
-                }
             }
             Spacer(modifier = Modifier.height(Spacing.md))
         }

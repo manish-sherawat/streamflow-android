@@ -17,14 +17,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,7 +44,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -45,17 +56,28 @@ import com.streamflow.app.ui.theme.AccentStar
 import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.BgElevated
 import com.streamflow.app.ui.theme.GlassBorder
-import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 import com.streamflow.app.ui.theme.StreamFlowType
 import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
 
-enum class SettingsTab(val title: String) {
-    QUALITY("🎥 Quality"),
-    SPEED("⚡ Speed"),
-    AUDIO("🎧 Audio & EQ"),
-    SUBTITLES("💬 Subtitles")
+// ── Dark player-matching surface colours ─────────────────────────────────────
+private val SheetBg          = Color(0xFF111318)
+private val SheetSurface     = Color(0xFF1C1E26)
+private val SheetBorder      = Color.White.copy(alpha = 0.10f)
+private val ChipSelectedBg   = Color.White
+private val ChipSelectedText = Color.Black
+private val ChipIdleBg       = Color(0xFF252830)
+private val ChipIdleText     = Color.White.copy(alpha = 0.75f)
+private val LabelColor       = Color.White.copy(alpha = 0.45f)
+private val HeaderColor      = Color.White
+
+enum class SettingsTab(val label: String, val icon: ImageVector) {
+    QUALITY("Quality",   Icons.Filled.Hd),
+    SPEED("Speed",       Icons.Filled.Speed),
+    AUDIO("Audio",       Icons.Filled.Headphones),
+    SUBTITLES("Subs",    Icons.Filled.Subtitles),
+    DISPLAY("Display",   Icons.Filled.AspectRatio)
 }
 
 @Composable
@@ -64,27 +86,36 @@ fun PlayerControlsSheet(
     audioTracks: List<TrackOption>,
     subtitleTracks: List<TrackOption>,
     videoQualities: List<VideoQualityOption>,
-    subtitleStyle: com.streamflow.app.ui.screens.player.SubtitleStyleConfig = com.streamflow.app.ui.screens.player.SubtitleStyleConfig(),
+    subtitleStyle: com.streamflow.app.ui.screens.player.SubtitleStyleConfig =
+        com.streamflow.app.ui.screens.player.SubtitleStyleConfig(),
     onSelectSpeed: (Float) -> Unit,
     onSelectAudioTrack: (TrackOption) -> Unit,
     onSelectSubtitleTrack: (TrackOption) -> Unit,
     onSelectVideoQuality: (VideoQualityOption) -> Unit,
     onUpdateSubtitleStyle: (com.streamflow.app.ui.screens.player.SubtitleStyleConfig) -> Unit = {},
+    // Display callbacks (new)
+    currentResizeMode: Int = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    onResizeModeChange: (Int) -> Unit = {},
+    isNerdStatsVisible: Boolean = false,
+    onToggleNerdStats: () -> Unit = {},
+    onOrientationChange: (Boolean) -> Unit = {},  // true = landscape
+    currentOrientationIsLandscape: Boolean = true,
     onDismiss: () -> Unit
 ) {
     var activeTab by remember { mutableStateOf(SettingsTab.QUALITY) }
-    val speeds = listOf(0.5f, 1.0f, 1.25f, 1.5f, 2.0f)
+    val speeds = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .background(BgElevated)
-                .border(1.dp, GlassBorder, MaterialTheme.shapes.large)
-                .padding(Spacing.lg)
+                .clip(MaterialTheme.shapes.extraLarge)
+                .background(SheetBg)
+                .border(1.dp, SheetBorder, MaterialTheme.shapes.extraLarge)
+                .padding(20.dp)
         ) {
-            // Header Row
+
+            // ── Header ─────────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,249 +123,292 @@ fun PlayerControlsSheet(
             ) {
                 Text(
                     text = "Playback Settings",
-                    style = StreamFlowType.sheetHeader.copy(fontWeight = FontWeight.Bold),
-                    color = TextPrimary
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HeaderColor
                 )
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(BgCard)
-                        .clickable { onDismiss() },
-                    contentAlignment = Alignment.Center
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = SheetSurface,
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Close",
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.md))
+            Spacer(Modifier.height(16.dp))
 
-            // Settings Navigation Tabs (Material 3 Expressive Monochrome)
+            // ── Tab Row ────────────────────────────────────────────────────
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(SettingsTab.values()) { tab ->
                     val isSelected = tab == activeTab
-                    Text(
-                        text = tab.title,
-                        style = StreamFlowType.caption.copy(
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        ),
-                        color = if (isSelected) Color.White else TextSecondary,
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(if (isSelected) Color.Black else BgCard)
-                            .border(0.5.dp, if (isSelected) Color.Transparent else GlassBorder, MaterialTheme.shapes.small)
-                            .clickable { activeTab = tab }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+                    Surface(
+                        onClick = { activeTab = tab },
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (isSelected) ChipSelectedBg else ChipIdleBg,
+                        modifier = Modifier.height(34.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = null,
+                                tint = if (isSelected) ChipSelectedText else ChipIdleText,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text(
+                                text = tab.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) ChipSelectedText else ChipIdleText
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.md))
+            Spacer(Modifier.height(16.dp))
 
-            // Tab Content
+            // ── Divider ────────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(0.5.dp)
+                    .background(SheetBorder)
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            // ── Tab Content ────────────────────────────────────────────────
             AnimatedContent(
                 targetState = activeTab,
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "TabContent"
             ) { tab ->
                 when (tab) {
+
+                    // ── Quality ──────────────────────────────────────────
                     SettingsTab.QUALITY -> {
                         Column {
-                            Text(
-                                text = "STREAM VIDEO QUALITY (SERVER DETECTED)",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
+                            SheetSectionLabel("VIDEO QUALITY")
+                            Spacer(Modifier.height(8.dp))
                             if (videoQualities.isEmpty()) {
-                                TrackOptionRow(trackName = "Auto (Adaptive)", isSelected = true, onClick = {})
+                                DarkTrackRow(name = "Auto (Adaptive)", isSelected = true, onClick = {})
                             } else {
-                                videoQualities.forEach { quality ->
-                                    QualityOptionRow(
-                                        quality = quality,
-                                        onClick = { onSelectVideoQuality(quality) }
-                                    )
+                                videoQualities.forEach { q ->
+                                    DarkQualityRow(quality = q, onClick = { onSelectVideoQuality(q) })
                                 }
                             }
                         }
                     }
 
+                    // ── Speed ─────────────────────────────────────────────
                     SettingsTab.SPEED -> {
                         Column {
-                            Text(
-                                text = "PLAYBACK SPEED RATE",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                            SheetSectionLabel("PLAYBACK SPEED")
+                            Spacer(Modifier.height(10.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(speeds) { speed ->
                                     val isSelected = speed == currentSpeed
-                                    Text(
-                                        text = if (speed == 1.0f) "1.0x (Normal)" else "${speed}x",
-                                        style = StreamFlowType.pillLabel,
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(if (isSelected) Color.Black else BgCard)
-                                            .border(1.dp, if (isSelected) Color.Black else GlassBorder, MaterialTheme.shapes.small)
-                                            .clickable { onSelectSpeed(speed) }
-                                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    DarkChip(
+                                        label = if (speed == 1.0f) "1× Normal" else "${speed}×",
+                                        isSelected = isSelected,
+                                        onClick = { onSelectSpeed(speed) }
                                     )
                                 }
                             }
                         }
                     }
 
+                    // ── Audio ─────────────────────────────────────────────
                     SettingsTab.AUDIO -> {
                         Column {
-                            Text(
-                                text = "AUDIO TRACKS",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
+                            SheetSectionLabel("AUDIO TRACKS")
+                            Spacer(Modifier.height(8.dp))
                             if (audioTracks.isEmpty()) {
-                                TrackOptionRow(trackName = "Default Audio (Stereo)", isSelected = true, onClick = {})
+                                DarkTrackRow(name = "Default (Stereo)", isSelected = true, onClick = {})
                             } else {
                                 audioTracks.forEach { track ->
-                                    TrackOptionRow(
-                                        trackName = track.name,
+                                    DarkTrackRow(
+                                        name = track.name,
                                         isSelected = track.isSelected,
                                         onClick = { onSelectAudioTrack(track) }
                                     )
                                 }
                             }
-
-                            Spacer(Modifier.height(Spacing.md))
-                            Text(
-                                text = "EQUALIZER SOUND MODE PRESETS",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            var selectedEqPreset by remember { mutableStateOf("Standard") }
+                            Spacer(Modifier.height(16.dp))
+                            SheetSectionLabel("SOUND MODE")
+                            Spacer(Modifier.height(8.dp))
+                            var selectedEq by remember { mutableStateOf("Standard") }
                             val eqPresets = listOf("Standard", "Vocal Clarity", "Bass Boost", "Night Mode")
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(eqPresets) { preset ->
-                                    val isSelected = preset == selectedEqPreset
-                                    Text(
-                                        text = preset,
-                                        style = StreamFlowType.pillLabel,
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(if (isSelected) Color.Black else BgCard)
-                                            .clickable { selectedEqPreset = preset }
-                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    DarkChip(
+                                        label = preset,
+                                        isSelected = preset == selectedEq,
+                                        onClick = { selectedEq = preset }
                                     )
                                 }
                             }
                         }
                     }
 
+                    // ── Subtitles ─────────────────────────────────────────
                     SettingsTab.SUBTITLES -> {
                         Column {
-                            Text(
-                                text = "SUBTITLES & CLOSED CAPTIONS",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
+                            SheetSectionLabel("SUBTITLE TRACKS")
+                            Spacer(Modifier.height(8.dp))
                             if (subtitleTracks.isEmpty()) {
-                                TrackOptionRow(trackName = "Off", isSelected = true, onClick = {})
+                                DarkTrackRow(name = "Off", isSelected = true, onClick = {})
                             } else {
                                 subtitleTracks.forEach { track ->
-                                    TrackOptionRow(
-                                        trackName = track.name,
+                                    DarkTrackRow(
+                                        name = track.name,
                                         isSelected = track.isSelected,
                                         onClick = { onSelectSubtitleTrack(track) }
                                     )
                                 }
                             }
 
-                            Spacer(Modifier.height(Spacing.md))
-                            Text(
-                                text = "CAPTION FONT SIZE",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
+                            Spacer(Modifier.height(16.dp))
+                            SheetSectionLabel("FONT SIZE")
+                            Spacer(Modifier.height(8.dp))
                             val fontSizes = listOf(14 to "Small", 18 to "Medium", 22 to "Large")
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                                items(fontSizes) { (spVal, label) ->
-                                    val isSelected = subtitleStyle.fontSizeSp == spVal
-                                    Text(
-                                        text = label,
-                                        style = StreamFlowType.pillLabel,
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(if (isSelected) Color.Black else BgCard)
-                                            .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(fontSizeSp = spVal)) }
-                                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(fontSizes) { (sp, label) ->
+                                    DarkChip(
+                                        label = label,
+                                        isSelected = subtitleStyle.fontSizeSp == sp,
+                                        onClick = { onUpdateSubtitleStyle(subtitleStyle.copy(fontSizeSp = sp)) }
                                     )
                                 }
                             }
 
-                            Spacer(Modifier.height(Spacing.md))
-                            Text(
-                                text = "TEXT COLOR",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            val colors = listOf(
+                            Spacer(Modifier.height(16.dp))
+                            SheetSectionLabel("TEXT COLOUR")
+                            Spacer(Modifier.height(8.dp))
+                            val colours = listOf(
                                 0xFFFFFFFFL to "White",
                                 0xFFFFCC00L to "Yellow",
                                 0xFF00E5FFL to "Cyan"
                             )
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                                items(colors) { (colorVal, label) ->
-                                    val isSelected = subtitleStyle.textColorArgb == colorVal
-                                    Text(
-                                        text = label,
-                                        style = StreamFlowType.pillLabel,
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(if (isSelected) Color.Black else BgCard)
-                                            .clickable { onUpdateSubtitleStyle(subtitleStyle.copy(textColorArgb = colorVal)) }
-                                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(colours) { (argb, label) ->
+                                    DarkChip(
+                                        label = label,
+                                        isSelected = subtitleStyle.textColorArgb == argb,
+                                        onClick = { onUpdateSubtitleStyle(subtitleStyle.copy(textColorArgb = argb)) }
                                     )
                                 }
                             }
-                            Spacer(Modifier.height(Spacing.md))
-                            Text(
-                                text = "SUBTITLE SYNC DELAY (CALIBRATION)",
-                                style = StreamFlowType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                                color = TextSecondary
-                            )
-                            Spacer(Modifier.height(Spacing.xs))
-                            var subtitleDelaySec by remember { mutableStateOf(0.0f) }
-                            val delays = listOf(-2.0f, -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 2.0f)
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+
+                            Spacer(Modifier.height(16.dp))
+                            SheetSectionLabel("SYNC DELAY")
+                            Spacer(Modifier.height(8.dp))
+                            var delay by remember { mutableStateOf(0.0f) }
+                            val delays = listOf(-2f, -1f, -0.5f, 0f, 0.5f, 1f, 2f)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(delays) { sec ->
-                                    val isSelected = sec == subtitleDelaySec
-                                    Text(
-                                        text = if (sec == 0f) "Sync (0s)" else if (sec > 0) "+${sec}s" else "${sec}s",
-                                        style = StreamFlowType.pillLabel,
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(if (isSelected) Color.Black else BgCard)
-                                            .clickable { subtitleDelaySec = sec }
-                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    DarkChip(
+                                        label = if (sec == 0f) "0s" else if (sec > 0) "+${sec}s" else "${sec}s",
+                                        isSelected = sec == delay,
+                                        onClick = { delay = sec }
                                     )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Display ───────────────────────────────────────────
+                    SettingsTab.DISPLAY -> {
+                        Column {
+                            // Aspect Ratio
+                            SheetSectionLabel("ASPECT RATIO")
+                            Spacer(Modifier.height(8.dp))
+                            val aspectModes = listOf(
+                                androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT    to "Fit  (16:9)",
+                                androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM   to "Crop to Fill",
+                                androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL   to "Stretch"
+                            )
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(aspectModes) { (mode, label) ->
+                                    DarkChip(
+                                        label = label,
+                                        isSelected = currentResizeMode == mode,
+                                        onClick = { onResizeModeChange(mode) }
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(20.dp))
+
+                            // Orientation
+                            SheetSectionLabel("SCREEN ORIENTATION")
+                            Spacer(Modifier.height(8.dp))
+                            val orientations = listOf(true to "Landscape", false to "Portrait")
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(orientations) { (isLand, label) ->
+                                    DarkChip(
+                                        label = label,
+                                        isSelected = currentOrientationIsLandscape == isLand,
+                                        onClick = { onOrientationChange(isLand) }
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(20.dp))
+
+                            // Nerd Stats toggle row
+                            SheetSectionLabel("DIAGNOSTICS")
+                            Spacer(Modifier.height(8.dp))
+                            Surface(
+                                onClick = onToggleNerdStats,
+                                shape = MaterialTheme.shapes.medium,
+                                color = if (isNerdStatsVisible) ChipSelectedBg else ChipIdleBg,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Filled.BarChart,
+                                            contentDescription = null,
+                                            tint = if (isNerdStatsVisible) ChipSelectedText else ChipIdleText,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "Show Nerd Stats",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isNerdStatsVisible) ChipSelectedText else ChipIdleText
+                                        )
+                                    }
+                                    if (isNerdStatsVisible) {
+                                        Icon(
+                                            Icons.Filled.Check,
+                                            contentDescription = null,
+                                            tint = ChipSelectedText,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -342,79 +416,132 @@ fun PlayerControlsSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.lg))
-            SecondaryButton(
-                label = "Apply & Close",
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
+            Spacer(Modifier.height(20.dp))
 
-@Composable
-private fun QualityOptionRow(quality: VideoQualityOption, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(if (quality.isSelected) Color.Black.copy(alpha = 0.08f) else BgCard)
-            .border(1.dp, if (quality.isSelected) TextPrimary else Color.Transparent, MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.md, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = quality.label,
-                style = StreamFlowType.body.copy(fontWeight = if (quality.isSelected) FontWeight.Bold else FontWeight.Normal),
-                color = TextPrimary
-            )
-            if (quality.is4K) {
-                Spacer(Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(Radius.chip)
-                        .background(AccentStar)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = "4K HDR",
-                        style = StreamFlowType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.ExtraBold),
-                        color = Color.Black
-                    )
-                }
+            // ── Close button ───────────────────────────────────────────────
+            Surface(
+                onClick = onDismiss,
+                shape = MaterialTheme.shapes.large,
+                color = SheetSurface,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Done",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 13.dp)
+                )
             }
         }
-        if (quality.isSelected) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
+    }
+}
+
+// ── Private helpers ───────────────────────────────────────────────────────────
+
+@Composable
+private fun SheetSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = LabelColor,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 0.8.sp
+    )
+}
+
+@Composable
+private fun DarkChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isSelected) ChipSelectedBg else ChipIdleBg,
+        modifier = Modifier.height(34.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 14.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) ChipSelectedText else ChipIdleText
+            )
         }
     }
 }
 
 @Composable
-private fun TrackOptionRow(trackName: String, isSelected: Boolean, onClick: () -> Unit) {
-    Row(
+private fun DarkQualityRow(quality: VideoQualityOption, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (quality.isSelected) Color.White.copy(alpha = 0.10f) else SheetSurface,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(if (isSelected) Color.Black.copy(alpha = 0.08f) else BgCard)
-            .border(1.dp, if (isSelected) TextPrimary else Color.Transparent, MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.md, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = trackName,
-            style = StreamFlowType.body.copy(fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal),
-            color = TextPrimary
-        )
-        if (isSelected) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = quality.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (quality.isSelected) FontWeight.Bold else FontWeight.Normal,
+                    color = Color.White
+                )
+                if (quality.is4K) {
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = AccentStar
+                    ) {
+                        Text(
+                            "4K HDR",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.Black,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            if (quality.isSelected) {
+                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DarkTrackRow(name: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isSelected) Color.White.copy(alpha = 0.10f) else SheetSurface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = Color.White
+            )
+            if (isSelected) {
+                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            }
         }
     }
 }

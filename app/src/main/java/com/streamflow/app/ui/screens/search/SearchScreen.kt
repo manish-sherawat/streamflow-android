@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -24,10 +25,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,7 +55,6 @@ import com.streamflow.app.ui.theme.AccentPrimary
 import com.streamflow.app.ui.theme.BgBase
 import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.BgInput
-import com.streamflow.app.ui.theme.Divider
 import com.streamflow.app.ui.theme.GlassBorder
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
@@ -59,9 +62,6 @@ import com.streamflow.app.ui.theme.StreamFlowType
 import com.streamflow.app.ui.theme.TextMuted
 import com.streamflow.app.ui.theme.TextPrimary
 import com.streamflow.app.ui.theme.TextSecondary
-import com.streamflow.app.ui.theme.TextTertiary
-
-import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
 fun SearchScreen(
@@ -85,55 +85,45 @@ fun SearchScreen(
             .background(BgBase)
             .statusBarsPadding()
     ) {
-        // ── Header ───────────────────────────────────────────────────────────
+        // ── Header ─────────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.md)
-                .padding(top = Spacing.sm, bottom = Spacing.sm),
+                .padding(top = Spacing.md, bottom = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "Search",
-                style = StreamFlowType.displayTitle,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
 
-            // Filter trigger button
-            Box(
-                modifier = Modifier
-                    .clip(Radius.chip)
-                    .background(BgCard)
-                    .border(0.5.dp, GlassBorder, Radius.chip)
-                    .clickable { showFilterSheet = true }
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            FilledTonalIconButton(
+                onClick = { showFilterSheet = true },
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = BgCard,
+                    contentColor = AccentPrimary
+                )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterList,
-                        contentDescription = "Filters",
-                        tint = AccentPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "Filter",
-                        style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
-                        color = TextPrimary
-                    )
-                }
+                Icon(
+                    Icons.Filled.FilterList,
+                    contentDescription = "Filters",
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
 
-        // ── Search Bar ───────────────────────────────────────────────────────
+        // ── Search Bar ─────────────────────────────────────────────────────────
         OutlinedTextField(
             value = uiState.query,
             onValueChange = viewModel::onQueryChange,
             placeholder = {
                 Text(
-                    text = "Titles, genres, actors, anime…",
-                    style = StreamFlowType.body,
+                    text = "Movies, shows, genres, anime…",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted
                 )
             },
@@ -165,7 +155,8 @@ fun SearchScreen(
                 focusedBorderColor      = AccentPrimary.copy(alpha = 0.8f),
                 unfocusedBorderColor    = GlassBorder,
                 focusedTextColor        = TextPrimary,
-                unfocusedTextColor      = TextPrimary
+                unfocusedTextColor      = TextPrimary,
+                cursorColor             = AccentPrimary
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -174,7 +165,7 @@ fun SearchScreen(
 
         Spacer(modifier = Modifier.height(Spacing.sm))
 
-        // ── Genre Filter Chips ───────────────────────────────────────────────
+        // ── Genre Filter Chips ─────────────────────────────────────────────────
         var selectedSort by remember { mutableStateOf("All") }
         val sortOptions = listOf("All", "Top Rated", "Anime", "Action", "Web Series", "Sci-Fi", "Drama", "4K UHD")
 
@@ -184,30 +175,40 @@ fun SearchScreen(
         ) {
             items(sortOptions) { option ->
                 val isSelected = option == selectedSort
+                val bgColor by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isSelected) AccentPrimary else BgCard,
+                    label = "sortChipBg"
+                )
+                val textColor by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isSelected) Color.White else TextSecondary,
+                    label = "sortChipText"
+                )
                 Text(
                     text = option,
-                    style = StreamFlowType.pillLabel.copy(
-                        color = if (isSelected) BgBase else TextSecondary,
+                    style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     ),
+                    color = textColor,
                     modifier = Modifier
-                        .clip(Radius.chip)
-                        .background(
-                            if (isSelected) TextPrimary else Color.Transparent
+                        .clip(Radius.pill)
+                        .background(bgColor)
+                        .border(
+                            width = if (isSelected) 0.dp else 0.5.dp,
+                            color = GlassBorder,
+                            shape = Radius.pill
                         )
-                        .border(0.5.dp, if (isSelected) Color.Transparent else GlassBorder, Radius.chip)
                         .clickable {
                             selectedSort = option
                             if (option != "All" && option != "Top Rated" && option != "Latest" && option != "4K UHD") {
                                 viewModel.onQueryChange(option)
                             }
                         }
-                        .padding(horizontal = 13.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
                 )
             }
         }
 
-        // ── Recent Searches (Shown when query is empty) ─────────────────────
+        // ── Recent Searches ────────────────────────────────────────────────────
         var recentSearches by remember { mutableStateOf(listOf("The Gentlemen", "Elite Force", "Disclosure Day", "Drishyam 3")) }
 
         if (uiState.query.isEmpty() && recentSearches.isNotEmpty()) {
@@ -219,31 +220,81 @@ fun SearchScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recent Searches",
-                        style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                        text = "Recent",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = TextSecondary
                     )
                     Text(
-                        text = "Clear",
-                        style = StreamFlowType.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                        text = "Clear all",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
                         color = AccentPrimary,
                         modifier = Modifier.clickable { recentSearches = emptyList() }
                     )
                 }
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     items(recentSearches) { recent ->
-                        Box(
-                            modifier = Modifier
-                                .clip(Radius.chip)
-                                .background(BgCard)
-                                .border(0.5.dp, GlassBorder, Radius.chip)
-                                .clickable { viewModel.onQueryChange(recent) }
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        Surface(
+                            shape = Radius.chip,
+                            color = BgCard,
+                            onClick = { viewModel.onQueryChange(recent) }
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Search,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text(
+                                    text = recent,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Autocomplete Suggestions ───────────────────────────────────────────
+        if (uiState.query.length >= 2 && uiState.results.isNotEmpty()) {
+            val suggestions = remember(uiState.query, uiState.results) {
+                uiState.results.map { it.name }.take(4)
+            }
+            Surface(
+                shape = Radius.card,
+                color = BgCard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+            ) {
+                Column(modifier = Modifier.padding(vertical = Spacing.xs)) {
+                    suggestions.forEach { suggestion ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.onQueryChange(suggestion) }
+                                .padding(horizontal = Spacing.md, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = null,
+                                tint = AccentPrimary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.sm))
                             Text(
-                                text = "🕒 $recent",
-                                style = StreamFlowType.caption.copy(fontSize = 11.sp),
+                                text = suggestion,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = TextPrimary
                             )
                         }
@@ -252,47 +303,9 @@ fun SearchScreen(
             }
         }
 
-        // ── Autocomplete Suggestions ─────────────────────────────────────────
-        if (uiState.query.length >= 2 && uiState.results.isNotEmpty()) {
-            val suggestions = remember(uiState.query, uiState.results) {
-                uiState.results.map { it.name }.take(4)
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
-                    .clip(Radius.input)
-                    .background(BgCard)
-                    .padding(vertical = Spacing.xs)
-            ) {
-                suggestions.forEach { suggestion ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.onQueryChange(suggestion) }
-                            .padding(horizontal = Spacing.md, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.sm))
-                        Text(
-                            text = suggestion,
-                            style = StreamFlowType.body,
-                            color = TextPrimary
-                        )
-                    }
-                }
-            }
-        }
-
         Spacer(modifier = Modifier.height(Spacing.xs))
 
-        // ── Results / State ──────────────────────────────────────────────────
+        // ── Results / States ───────────────────────────────────────────────────
         when {
             uiState.isSearching -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -303,9 +316,7 @@ fun SearchScreen(
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     contentPadding = PaddingValues(
-                        start = Spacing.md,
-                        end = Spacing.md,
-                        bottom = 100.dp
+                        start = Spacing.md, end = Spacing.md, bottom = 100.dp
                     ),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm)
@@ -327,15 +338,23 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "No results for \"${uiState.query}\"",
-                        style = StreamFlowType.body,
-                        color = TextSecondary
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = null,
+                            tint = TextMuted,
+                            modifier = Modifier.size(44.dp)
+                        )
+                        Spacer(Modifier.height(Spacing.sm))
+                        Text(
+                            text = "No results for \"${uiState.query}\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                    }
                 }
             }
             else -> {
-                // Empty state
                 Box(
                     modifier = Modifier.fillMaxSize().padding(bottom = 100.dp),
                     contentAlignment = Alignment.Center
@@ -345,13 +364,19 @@ fun SearchScreen(
                             Icons.Filled.Search,
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.size(44.dp)
+                            modifier = Modifier.size(52.dp)
                         )
                         Spacer(modifier = Modifier.height(Spacing.sm))
                         Text(
-                            text = "Search movies, shows, and more",
-                            style = StreamFlowType.body,
+                            text = "Search movies, shows & more",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Try titles, genres or actors",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
                         )
                     }
                 }

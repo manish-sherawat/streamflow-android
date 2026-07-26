@@ -195,7 +195,7 @@ class FirestoreCatalogRepository @Inject constructor() : CatalogRepository {
         }
     }
 
-    override suspend fun getTitle(id: String): Title? {
+    override suspend fun getTitle(id: String, forceRefresh: Boolean): Title? {
         val col = titlesCollection ?: return sampleTitles.find { it.id == id }
         return runCatching {
             val doc = col.document(id).get().await()

@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import com.streamflow.app.ui.theme.GlassBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -29,11 +29,21 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,25 +69,18 @@ import com.streamflow.app.ui.components.EpisodeCard
 import com.streamflow.app.ui.components.GlassPill
 import com.streamflow.app.ui.components.PosterCard
 import com.streamflow.app.ui.components.PrimaryButton
+import com.streamflow.app.ui.components.ReportIssueDialog
 import com.streamflow.app.ui.components.SecondaryButton
 import com.streamflow.app.ui.theme.AccentPrimary
 import com.streamflow.app.ui.theme.AccentStar
 import com.streamflow.app.ui.theme.BgBase
 import com.streamflow.app.ui.theme.BgCard
+import com.streamflow.app.ui.theme.BgElevated
+import com.streamflow.app.ui.theme.GlassBorder
 import com.streamflow.app.ui.theme.Radius
 import com.streamflow.app.ui.theme.Spacing
 import com.streamflow.app.ui.theme.StreamFlowType
 import com.streamflow.app.ui.theme.TextPrimary
-import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.runtime.LaunchedEffect
-import com.streamflow.app.ui.components.ReportIssueDialog
-import com.streamflow.app.ui.theme.AccentPrimary
-import com.streamflow.app.ui.theme.BgCard
 import com.streamflow.app.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 
@@ -97,22 +101,12 @@ fun TitleDetailScreen(
 
     val pullToRefreshState = rememberPullToRefreshState()
 
-    // Trigger refresh when user pulls down past threshold
     LaunchedEffect(pullToRefreshState.isRefreshing) {
-        if (pullToRefreshState.isRefreshing) {
-            viewModel.refresh()
-        }
+        if (pullToRefreshState.isRefreshing) viewModel.refresh()
     }
-
-    // Sync ViewModel refreshing state to indicator
     LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            pullToRefreshState.startRefresh()
-        } else {
-            pullToRefreshState.endRefresh()
-        }
+        if (isRefreshing) pullToRefreshState.startRefresh() else pullToRefreshState.endRefresh()
     }
-
     LaunchedEffect(reportMessage) {
         if (reportMessage != null) {
             delay(3000)
@@ -127,24 +121,21 @@ fun TitleDetailScreen(
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
         when (val state = uiState) {
-            is TitleDetailUiState.Loading ->
-                DetailShimmerSkeleton()
-            is TitleDetailUiState.NotFound ->
-                Text(
-                    "Title not found",
-                    style = StreamFlowType.body,
-                    color = TextSecondary,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            is TitleDetailUiState.Success ->
-                DetailContent(
-                    state = state,
-                    onBack = onBack,
-                    onPlay = onPlay,
-                    onToggleWatchlist = viewModel::toggleWatchlist,
-                    onReportClick = { showReportDialog = true },
-                    onTitleClick = onTitleClick
-                )
+            is TitleDetailUiState.Loading -> DetailShimmerSkeleton()
+            is TitleDetailUiState.NotFound -> Text(
+                "Title not found",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            is TitleDetailUiState.Success -> DetailContent(
+                state = state,
+                onBack = onBack,
+                onPlay = onPlay,
+                onToggleWatchlist = viewModel::toggleWatchlist,
+                onReportClick = { showReportDialog = true },
+                onTitleClick = onTitleClick
+            )
         }
 
         PullToRefreshContainer(
@@ -154,24 +145,28 @@ fun TitleDetailScreen(
             contentColor = AccentPrimary
         )
 
-        // Report Toast Notification
+        // Report toast
         reportMessage?.let { msg ->
-            Box(
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = BgElevated,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 32.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
-                    .background(Color.Black.copy(alpha = 0.90f))
-                    .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraLarge)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = msg,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.Flag,
+                        contentDescription = null,
+                        tint = AccentPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(msg, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                }
             }
         }
     }
@@ -190,6 +185,7 @@ fun TitleDetailScreen(
     }
 }
 
+// ── Detail Content ─────────────────────────────────────────────────────────────
 @Composable
 private fun DetailContent(
     state: TitleDetailUiState.Success,
@@ -210,8 +206,7 @@ private fun DetailContent(
                 // Title
                 Text(
                     text = title.name,
-                    style = StreamFlowType.displayTitle.copy(
-                        fontSize = 24.sp,
+                    style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.5).sp
                     ),
@@ -219,7 +214,7 @@ private fun DetailContent(
                 )
                 Spacer(Modifier.height(Spacing.xs))
 
-                // Metadata chips row
+                // Metadata chips
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -233,8 +228,8 @@ private fun DetailContent(
                                 modifier = Modifier.size(13.dp)
                             )
                             Text(
-                                text = " ${title.imdbRating}",
-                                style = StreamFlowType.pillLabel,
+                                " ${title.imdbRating}",
+                                style = MaterialTheme.typography.labelMedium,
                                 color = AccentStar,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -264,41 +259,43 @@ private fun DetailContent(
                         onClick = onToggleWatchlist,
                         modifier = Modifier.weight(0.9f)
                     )
-                    Box(
-                        modifier = Modifier
-                            .height(46.dp)
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraLarge)
-                            .clickable(onClick = onReportClick)
-                            .padding(horizontal = 14.dp),
-                        contentAlignment = Alignment.Center
+                    // Share button
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    FilledTonalIconButton(
+                        onClick = {
+                            val sendIntent = android.content.Intent().apply {
+                                action = android.content.Intent.ACTION_SEND
+                                putExtra(android.content.Intent.EXTRA_TEXT, "Watch ${title.name} on StreamFlow: https://streamflow.app/title/${title.id}")
+                                type = "text/plain"
+                            }
+                            context.startActivity(android.content.Intent.createChooser(sendIntent, "Share"))
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = BgCard,
+                            contentColor = TextSecondary
+                        )
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Flag,
-                                contentDescription = "Report Issue",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = "Report",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = TextPrimary
-                            )
-                        }
+                        Icon(Icons.Filled.Share, contentDescription = "Share", modifier = Modifier.size(18.dp))
+                    }
+                    // Report button
+                    FilledTonalIconButton(
+                        onClick = onReportClick,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = BgCard,
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(Icons.Outlined.Flag, contentDescription = "Report", modifier = Modifier.size(18.dp))
                     }
                 }
                 Spacer(Modifier.height(Spacing.md))
 
-                // Expandable Synopsis
+                // Synopsis
                 var isSynopsisExpanded by remember { mutableStateOf(false) }
-
                 Column {
                     Text(
                         text = title.synopsis,
-                        style = StreamFlowType.body,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                         maxLines = if (isSynopsisExpanded) Int.MAX_VALUE else 3,
                         overflow = TextOverflow.Ellipsis
@@ -307,7 +304,7 @@ private fun DetailContent(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = if (isSynopsisExpanded) "Show Less ▲" else "Read More ▼",
-                            style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = AccentPrimary,
                             modifier = Modifier.clickable { isSynopsisExpanded = !isSynopsisExpanded }
                         )
@@ -317,8 +314,16 @@ private fun DetailContent(
             }
         }
 
-        // Movie Details Area
-        item { SectionHeader("Movie Details") }
+        // Details card
+        item {
+            Text(
+                text = "Details",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)
+            )
+        }
         item {
             Column(
                 modifier = Modifier
@@ -326,35 +331,19 @@ private fun DetailContent(
                     .padding(horizontal = Spacing.md)
                     .clip(Radius.card)
                     .background(BgCard)
-                    .border(1.dp, GlassBorder, Radius.card)
                     .padding(Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
-                DetailRow(
-                    label = "Genre",
-                    value = if (title.genres.isNotEmpty()) title.genres.joinToString(", ") else "Entertainment"
-                )
-                DetailRow(
-                    label = "Quality",
-                    value = if (title.is4kHdr) "4K Ultra HD • HDR10 • 2160p" else "Full HD 1080p • 60fps"
-                )
-                DetailRow(
-                    label = "Audio & Language",
-                    value = if (title.hasSubtitles) "English (5.1 Surround), Subtitles Available" else "English (Stereo)"
-                )
-                DetailRow(
-                    label = "Release Year",
-                    value = "${title.releaseYear}"
-                )
-                DetailRow(
-                    label = "Category",
-                    value = if (isSeries) "TV Series • Multi-Season" else "Feature Film"
-                )
+                DetailRow("Genre", if (title.genres.isNotEmpty()) title.genres.joinToString(", ") else "Entertainment")
+                DetailRow("Quality", if (title.is4kHdr) "4K Ultra HD · HDR10" else "Full HD 1080p")
+                DetailRow("Audio", if (title.hasSubtitles) "English · Subtitles Available" else "English")
+                DetailRow("Year", "${title.releaseYear}")
+                DetailRow("Type", if (isSeries) "TV Series" else "Feature Film")
             }
             Spacer(Modifier.height(Spacing.lg))
         }
 
-        // Episodes Section with Season Selector & View Mode Toggle
+        // Episodes section
         if (isSeries && title.episodes.isNotEmpty()) {
             item {
                 val availableSeasons = remember(title.episodes) {
@@ -387,28 +376,26 @@ private fun DetailContent(
                     ) {
                         Text(
                             text = if (isAnime) "Episodes & Arcs (${filteredEpisodes.size})" else "Episodes (${filteredEpisodes.size})",
-                            style = StreamFlowType.sectionHeader,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
-
-                        // Layout View Toggle Button
-                        Box(
-                            modifier = Modifier
-                                .clip(Radius.chip)
-                                .background(BgCard)
-                                .border(1.dp, GlassBorder, Radius.chip)
-                                .clickable { isListView = !isListView }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        Surface(
+                            shape = Radius.chip,
+                            color = BgCard,
+                            onClick = { isListView = !isListView }
                         ) {
                             Text(
-                                text = if (isListView) " Grid View" else " List View",
-                                style = StreamFlowType.caption.copy(fontWeight = FontWeight.Bold),
-                                color = AccentStar
+                                text = if (isListView) "Grid" else "List",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AccentPrimary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                             )
                         }
                     }
 
-                    // Season / Arc Chips Selector
+                    // Season chips
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -419,16 +406,19 @@ private fun DetailContent(
                             val epCount = title.episodes.count { it.seasonNumber == seasonNum }
                             val label = if (isAnime) "Arc $seasonNum ($epCount)" else "$seasonStr ($epCount)"
 
+                            val bgColor by androidx.compose.animation.animateColorAsState(
+                                targetValue = if (isSelected) AccentPrimary else BgCard,
+                                label = "season_chip_bg"
+                            )
                             Text(
                                 text = label,
-                                style = StreamFlowType.pillLabel.copy(
-                                    color = if (isSelected) Color.White else TextSecondary,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                                 ),
+                                color = if (isSelected) Color.White else TextSecondary,
                                 modifier = Modifier
                                     .clip(Radius.chip)
-                                    .background(if (isSelected) AccentPrimary else BgCard)
-                                    .border(1.dp, if (isSelected) AccentPrimary else GlassBorder, Radius.chip)
+                                    .background(bgColor)
                                     .clickable { selectedSeason = seasonStr }
                                     .padding(horizontal = 14.dp, vertical = 7.dp)
                             )
@@ -463,7 +453,7 @@ private fun DetailContent(
                                         .clip(Radius.card)
                                         .background(BgCard)
                                         .border(
-                                            width = if (isNextUp) 1.5.dp else 1.dp,
+                                            width = if (isNextUp) 1.5.dp else 0.5.dp,
                                             color = if (isNextUp) AccentPrimary else GlassBorder,
                                             shape = Radius.card
                                         )
@@ -475,7 +465,7 @@ private fun DetailContent(
                                         modifier = Modifier
                                             .size(96.dp, 58.dp)
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF14171E))
+                                            .background(BgElevated)
                                     ) {
                                         AsyncImage(
                                             model = ep.thumbUrl,
@@ -486,27 +476,25 @@ private fun DetailContent(
                                         Box(
                                             modifier = Modifier
                                                 .align(Alignment.Center)
-                                                .size(28.dp)
+                                                .size(26.dp)
                                                 .clip(CircleShape)
-                                                .background(Color.Black.copy(alpha = 0.6f))
-                                                .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape),
+                                                .background(Color.Black.copy(alpha = 0.65f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Filled.PlayArrow,
+                                                Icons.Filled.PlayArrow,
                                                 contentDescription = null,
                                                 tint = Color.White,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
-
                                         if (ep.progressFraction > 0f) {
                                             Box(
                                                 modifier = Modifier
                                                     .align(Alignment.BottomStart)
                                                     .fillMaxWidth()
                                                     .height(3.dp)
-                                                    .background(Color.Black.copy(alpha = 0.5f))
+                                                    .background(Color.White.copy(alpha = 0.2f))
                                             ) {
                                                 Box(
                                                     modifier = Modifier
@@ -519,29 +507,26 @@ private fun DetailContent(
                                     }
                                     Spacer(Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            if (isNextUp) {
-                                                Text(
-                                                    text = "NEXT UP • ",
-                                                    style = StreamFlowType.caption.copy(
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.ExtraBold,
-                                                        color = AccentPrimary
-                                                    )
-                                                )
-                                            }
+                                        if (isNextUp) {
                                             Text(
-                                                text = "E${ep.episodeNumber}. ${ep.title}",
-                                                style = StreamFlowType.body.copy(fontWeight = FontWeight.Bold),
-                                                color = TextPrimary,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                                "NEXT UP · ",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = FontWeight.ExtraBold
+                                                ),
+                                                color = AccentPrimary
                                             )
                                         }
+                                        Text(
+                                            text = "E${ep.episodeNumber}. ${ep.title}",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                         Spacer(Modifier.height(2.dp))
                                         Text(
-                                            text = "${(ep.durationSec / 60).takeIf { it > 0 } ?: 24} mins • Season ${ep.seasonNumber}",
-                                            style = StreamFlowType.caption.copy(fontSize = 11.sp),
+                                            text = "${(ep.durationSec / 60).takeIf { it > 0 } ?: 24} min · S${ep.seasonNumber}",
+                                            style = MaterialTheme.typography.labelSmall,
                                             color = TextSecondary
                                         )
                                     }
@@ -556,7 +541,15 @@ private fun DetailContent(
 
         // More like this
         if (state.similar.isNotEmpty()) {
-            item { SectionHeader("More Like This") }
+            item {
+                Text(
+                    text = "More Like This",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                )
+            }
             item {
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = Spacing.md),
@@ -577,6 +570,7 @@ private fun DetailContent(
     }
 }
 
+// ── Backdrop ───────────────────────────────────────────────────────────────────
 @Composable
 private fun Backdrop(title: Title, onBack: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().height(340.dp)) {
@@ -586,15 +580,15 @@ private fun Backdrop(title: Title, onBack: () -> Unit) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        // Clean status bar top safe space gradient + bottom-to-black gradient
+        // Clean vignette — no coloured ambient glow
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.0f  to Color.Black.copy(alpha = 0.5f),
-                            0.20f to Color.Transparent,
+                            0.0f  to Color.Black.copy(alpha = 0.45f),
+                            0.25f to Color.Transparent,
                             0.65f to Color.Transparent,
                             1.0f  to BgBase
                         )
@@ -602,58 +596,44 @@ private fun Backdrop(title: Title, onBack: () -> Unit) {
                 )
         )
 
-        // Back button with status bars safe space
-        Box(
+        // Back button
+        FilledTonalIconButton(
+            onClick = onBack,
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = Color.Black.copy(alpha = 0.55f),
+                contentColor = Color.White
+            ),
             modifier = Modifier
                 .statusBarsPadding()
                 .padding(top = Spacing.md, start = Spacing.md)
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.6f))
-                .clickable(onClick = onBack),
-            contentAlignment = Alignment.Center
+                .size(40.dp)
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
         }
     }
 }
 
-@Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = StreamFlowType.sectionHeader,
-        color = TextPrimary,
-        modifier = Modifier.padding(
-            horizontal = Spacing.md,
-            vertical = Spacing.xs
-        )
-    )
-}
-
+// ── Detail Row ─────────────────────────────────────────────────────────────────
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
         Text(
             text = label,
-            style = StreamFlowType.caption.copy(fontSize = 13.sp),
+            style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
             modifier = Modifier.padding(end = 16.dp)
         )
         Text(
             text = value,
-            style = StreamFlowType.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
             color = TextPrimary,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)

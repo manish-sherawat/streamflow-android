@@ -9,5 +9,4 @@
 - **Watchlist Auto-Sync**: Fixed "My List" auto-refresh and title resolution across all rails.
 - **Pull-to-Refresh & UI Polish**: Standardized Anime World styling, fixed pull-to-refresh gestures, and removed VIP PRO badge.
 
----
-📥 Download `app-release.apk` below and enjoy high-speed streaming!
+
